@@ -1,0 +1,7 @@
+C:\Users\SUROJ\Desktop\comiksan\obj\Debug\net8.0\comiksan.csproj.AssemblyReference.cache
+C:\Users\SUROJ\Desktop\comiksan\obj\Debug\net8.0\comiksan.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\SUROJ\Desktop\comiksan\obj\Debug\net8.0\comiksan.AssemblyInfoInputs.cache
+C:\Users\SUROJ\Desktop\comiksan\obj\Debug\net8.0\comiksan.AssemblyInfo.cs
+C:\Users\SUROJ\Desktop\comiksan\obj\Debug\net8.0\comiksan.csproj.CoreCompileInputs.cache
+C:\Users\SUROJ\Desktop\comiksan\obj\Debug\net8.0\comiksan.MvcApplicationPartsAssemblyInfo.cs
+C:\Users\SUROJ\Desktop\comiksan\obj\Debug\net8.0\comiksan.MvcApplicationPartsAssemblyInfo.cache

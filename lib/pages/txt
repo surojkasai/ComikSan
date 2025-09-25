@@ -1,0 +1,15 @@
+// Expanded(
+//               flex: 1,
+//               child: Column(
+//                 children: [
+//                   Text('Title', style: TextStyle(fontSize: 15)),
+//                   Image.asset('assets/bookImages/Demon_Slayer.jpg'),
+//                 ],
+//               ),
+//             ),
+
+//             // Right side - grey
+//             Expanded(
+//               flex: 1,
+//               child: ListView(children: [Text('Item 1'), Text('Item 2'), Text('Item 3')]),
+//             ),
