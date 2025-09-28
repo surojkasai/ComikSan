@@ -5,11 +5,13 @@ import 'package:flutter/material.dart';
 
 class Headfooter extends StatefulWidget {
   final Widget body;
+  final Widget? LastReadIcon;
+  final Widget? searchIcon;
 
-  final Widget topicon;
   const Headfooter({
     super.key,
-    required this.topicon,
+    this.searchIcon,
+    this.LastReadIcon,
     required this.body, //required this.footer
   });
 
@@ -53,42 +55,53 @@ class _HeadfooterState extends State<Headfooter> {
               ),
         ),
         actions: [
-          //topicon=searchicon
-          IconButton(
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: Text('Search'),
-                    content: TextField(
-                      decoration: InputDecoration(
-                        hintText: 'Search Comicks',
-                        //hintStyle: TextStyle(color: Colors.black87),
-                        enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white38),
-                        ),
-                        focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.black),
+          if (widget.searchIcon != null)
+            IconButton(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text('Search'),
+                      content: TextField(
+                        decoration: InputDecoration(
+                          hintText: 'Search Comicks',
+                          //hintStyle: TextStyle(color: Colors.black87),
+                          enabledBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(color: Colors.white38),
+                          ),
+                          focusedBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(color: Colors.black),
+                          ),
                         ),
                       ),
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: Text('close'),
-                      ),
-                      TextButton(onPressed: () {}, child: Text('search')),
-                    ],
-                  );
-                },
-              );
-            },
-            icon: widget.topicon,
-            color: Colors.white,
-          ),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          child: Text('close'),
+                        ),
+                        TextButton(onPressed: () {}, child: Text('search')),
+                      ],
+                    );
+                  },
+                );
+              },
+              icon: widget.searchIcon!,
+              color: Colors.white,
+            ),
+
+          if (widget.LastReadIcon != null)
+            IconButton(
+              onPressed: () {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text("Marked as last read")));
+              },
+              icon: widget.LastReadIcon!,
+              color: Colors.white,
+            ),
 
           IconButton(
             onPressed: () {

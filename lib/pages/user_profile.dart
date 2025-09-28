@@ -30,7 +30,7 @@ class _UserProfileState extends State<UserProfile> {
   @override
   Widget build(BuildContext context) {
     return Headfooter(
-      topicon: Icon(Icons.search),
+      // topicon: Icon(Icons.search),
       body: Scaffold(
         backgroundColor: Colors.black,
         body: SingleChildScrollView(

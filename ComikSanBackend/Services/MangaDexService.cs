@@ -36,33 +36,55 @@ namespace ComikSanBackend.Services
     }
 }
 
-private List<Comic> ParseMangaDexResponse(string json)
+public async Task<Comic?> GetMangaByIdAsync(string mangaDexId)
 {
-    var comics = new List<Comic>();
-    
     try
     {
-        using var document = JsonDocument.Parse(json);
-        var root = document.RootElement;
+        var response = await _httpClient.GetAsync(
+            $"https://api.mangadex.org/manga/{mangaDexId}");
         
-        if (root.TryGetProperty("data", out var dataElement) && 
-            dataElement.ValueKind == JsonValueKind.Array)
+        if (response.IsSuccessStatusCode)
         {
-            foreach (var mangaElement in dataElement.EnumerateArray())
-            {
-                var comic = ParseMangaElement(mangaElement);
-                if (comic != null)
-                    comics.Add(comic);
-            }
+            var json = await response.Content.ReadAsStringAsync();
+            using var document = JsonDocument.Parse(json);
+            var dataElement = document.RootElement.GetProperty("data");
+            return ParseMangaElement(dataElement);
         }
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"JSON parsing error: {ex.Message}");
+        Console.WriteLine($"Error getting manga by ID: {ex.Message}");
     }
-    
-    return comics;
+    return null;
 }
+
+        private List<Comic> ParseMangaDexResponse(string json)
+        {
+            var comics = new List<Comic>();
+
+            try
+            {
+                using var document = JsonDocument.Parse(json);
+                var root = document.RootElement;
+
+                if (root.TryGetProperty("data", out var dataElement) &&
+                    dataElement.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var mangaElement in dataElement.EnumerateArray())
+                    {
+                        var comic = ParseMangaElement(mangaElement);
+                        if (comic != null)
+                            comics.Add(comic);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"JSON parsing error: {ex.Message}");
+            }
+
+            return comics;
+        }
 
 private Comic? ParseMangaElement(JsonElement mangaElement)
 {

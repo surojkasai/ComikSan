@@ -76,7 +76,7 @@ class _DownloadpageState extends State<Downloadpage> {
     return GestureDetector(
       onTap: widget.onTap,
       child: Headfooter(
-        topicon: Icon(Icons.category_outlined),
+        // topicon: Icon(Icons.category_outlined),
         body: SingleChildScrollView(
           child: Container(
             color: Colors.black,

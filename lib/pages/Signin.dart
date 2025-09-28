@@ -31,7 +31,7 @@ class _UserProfileState extends State<Signin> {
   TextEditingController confirmpasswordController = TextEditingController();
   Widget build(BuildContext context) {
     return Headfooter(
-      topicon: Icon(Icons.search),
+      // topicon: Icon(Icons.search),
       body: Scaffold(
         backgroundColor: Colors.black,
         body: SingleChildScrollView(

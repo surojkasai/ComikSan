@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 
 //this code is responsible for the homepage comicks structure
 class ComicCard extends StatelessWidget {
-  final String imagePath;
-  final String title;
-  final String chapter;
-  final String time;
-  final String translator;
   final IconData? downloadIcon;
+  final String imagePath;
+  final String chapter;
+  final String translator;
+  final String title;
+  final String time;
 
   ComicCard({
     super.key,

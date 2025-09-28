@@ -1,4 +1,6 @@
+import 'package:comiksan/pages/main_page.dart';
 import 'package:comiksan/util/headfooter.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class ComickDetails extends StatefulWidget {
@@ -16,13 +18,11 @@ class _ComickDetailsState extends State<ComickDetails> {
     {'label': 'Status:', 'value': 'Completed'},
     {'label': 'Rating:', 'value': '9.5'},
   ];
-
+  final user = FirebaseAuth.instance.currentUser;
   @override
   Widget build(BuildContext context) {
     return Headfooter(
-      //i have used the topicon here so that i can use same button at different places and perform different actions and icons
-      topicon: Icon(Icons.search),
-
+      searchIcon: Icon(Icons.search),
       body: SingleChildScrollView(
         child: ConstrainedBox(
           constraints: BoxConstraints(
@@ -79,7 +79,12 @@ class _ComickDetailsState extends State<ComickDetails> {
                               const SizedBox(height: 10),
                               Flexible(
                                 child: TextButton(
-                                  onPressed: () {},
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (context) => MainPage()),
+                                    );
+                                  },
                                   style: TextButton.styleFrom(
                                     backgroundColor: Colors.blue,
                                     shape: RoundedRectangleBorder(
@@ -121,7 +126,7 @@ class _ComickDetailsState extends State<ComickDetails> {
                 ),
                 Text('Description', style: TextStyle(color: Colors.white, fontSize: 20)),
                 Text(
-                  'Description DescriptionDescriptionDescription',
+                  'Description DescriptionDescriptionDescription DescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescription DescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescription',
                   style: TextStyle(color: Colors.white, fontSize: 20),
                 ),
               ],

@@ -71,9 +71,7 @@ namespace ComikSanBackend.Controllers
                 var results = await _mangaDexService.SearchMangaAsync(mangaDexId);
                 var manga = results.FirstOrDefault(m => m.MangaDexId == mangaDexId);
 
-                if (manga == null)
-                    return NotFound($"Manga with ID {mangaDexId} not found");
-
+                
                 // Check if manga already exists in database
                 var existingManga = _context.Comics.FirstOrDefault(c => c.MangaDexId == mangaDexId);
                 if (existingManga != null)
@@ -84,7 +82,13 @@ namespace ComikSanBackend.Controllers
                         comic = existingManga
                     });
                 }
-
+                 if (manga == null)
+        {
+            // If not found in search, try direct ID search
+            manga = await _mangaDexService.GetMangaByIdAsync(mangaDexId);
+            if (manga == null)
+                return NotFound($"Manga with ID {mangaDexId} not found");
+        }
                 // Save to database
                 _context.Comics.Add(manga);
                 await _context.SaveChangesAsync();

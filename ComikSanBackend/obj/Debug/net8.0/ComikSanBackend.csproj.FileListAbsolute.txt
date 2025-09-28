@@ -157,3 +157,4 @@ C:\Users\SUROJ\Desktop\comiksan\ComikSanBackend\obj\Debug\net8.0\refint\ComikSan
 C:\Users\SUROJ\Desktop\comiksan\ComikSanBackend\obj\Debug\net8.0\ComikSanBackend.pdb
 C:\Users\SUROJ\Desktop\comiksan\ComikSanBackend\obj\Debug\net8.0\ComikSanBackend.genruntimeconfig.cache
 C:\Users\SUROJ\Desktop\comiksan\ComikSanBackend\obj\Debug\net8.0\ref\ComikSanBackend.dll
+C:\Users\SUROJ\Desktop\comiksan\ComikSanBackend\obj\Debug\net8.0\ComikSanBackend.sourcelink.json
