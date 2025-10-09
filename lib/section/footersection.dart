@@ -1,4 +1,3 @@
-import 'package:comiksan/pages/comick_details.dart';
 import 'package:comiksan/pages/download_page.dart';
 import 'package:flutter/material.dart';
 
@@ -47,10 +46,10 @@ class _FootersectionState extends State<Footersection> {
                   builder:
                       (context) => Downloadpage(
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => ComickDetails()),
-                          );
+                          // Navigator.push(
+                          //   context,
+                          //   MaterialPageRoute(builder: (context) => ComickDetails()),
+                          // );
                         },
                       ),
                 ),

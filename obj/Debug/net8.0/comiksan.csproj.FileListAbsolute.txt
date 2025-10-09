@@ -5,3 +5,4 @@ C:\Users\SUROJ\Desktop\comiksan\obj\Debug\net8.0\comiksan.AssemblyInfo.cs
 C:\Users\SUROJ\Desktop\comiksan\obj\Debug\net8.0\comiksan.csproj.CoreCompileInputs.cache
 C:\Users\SUROJ\Desktop\comiksan\obj\Debug\net8.0\comiksan.MvcApplicationPartsAssemblyInfo.cs
 C:\Users\SUROJ\Desktop\comiksan\obj\Debug\net8.0\comiksan.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\SUROJ\Desktop\comiksan\obj\Debug\net8.0\comiksan.sourcelink.json

@@ -158,3 +158,6 @@ C:\Users\SUROJ\Desktop\comiksan\ComikSanBackend\obj\Debug\net8.0\ComikSanBackend
 C:\Users\SUROJ\Desktop\comiksan\ComikSanBackend\obj\Debug\net8.0\ComikSanBackend.genruntimeconfig.cache
 C:\Users\SUROJ\Desktop\comiksan\ComikSanBackend\obj\Debug\net8.0\ref\ComikSanBackend.dll
 C:\Users\SUROJ\Desktop\comiksan\ComikSanBackend\obj\Debug\net8.0\ComikSanBackend.sourcelink.json
+C:\Users\SUROJ\Desktop\comiksan\ComikSanBackend\bin\Debug\net8.0\Microsoft.Extensions.Caching.StackExchangeRedis.dll
+C:\Users\SUROJ\Desktop\comiksan\ComikSanBackend\bin\Debug\net8.0\Pipelines.Sockets.Unofficial.dll
+C:\Users\SUROJ\Desktop\comiksan\ComikSanBackend\bin\Debug\net8.0\StackExchange.Redis.dll

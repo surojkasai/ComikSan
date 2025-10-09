@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("comiksan")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1aedd14e8e44d893a97daf53ef0c472bd53e90ab")]
 [assembly: System.Reflection.AssemblyProductAttribute("comiksan")]
 [assembly: System.Reflection.AssemblyTitleAttribute("comiksan")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

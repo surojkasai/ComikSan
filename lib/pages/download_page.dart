@@ -1,6 +1,8 @@
+import 'package:comiksan/providers/comic_providers.dart';
 import 'package:comiksan/section/comiccard.dart';
 import 'package:comiksan/util/headfooter.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class Downloadpage extends StatefulWidget {
   final VoidCallback? onTap;
@@ -73,6 +75,8 @@ class _DownloadpageState extends State<Downloadpage> {
 
   @override
   Widget build(BuildContext context) {
+    final comicProvider = Provider.of<ComicProvider>(context);
+    final comics = comicProvider.comics; // Real data from backend
     return GestureDetector(
       onTap: widget.onTap,
       child: Headfooter(
@@ -95,13 +99,7 @@ class _DownloadpageState extends State<Downloadpage> {
                       comics.map((comic) {
                         return SizedBox(
                           width: (MediaQuery.of(context).size.width - 40) / 3, // 3 items per row
-                          child: ComicCard(
-                            imagePath: comic['image']!,
-                            title: comic['title']!,
-                            chapter: comic['chapter']!,
-                            time: comic['time']!,
-                            translator: comic['translator']!,
-                          ),
+                          child: ComicCard(downloadIcon: Icons.download, comic: comic),
                         );
                       }).toList(),
                 ),

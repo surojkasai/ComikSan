@@ -16,14 +16,22 @@ namespace ComikSanBackend.Models
         public int FollowerCount { get; set; }
 
         // ✅ Initialize to avoid null during POST
-        public List<Chapter> Chapters { get; set; } = new();
 
         //mangadex fields
         public string? MangaDexId { get; set; }
         public string? Description { get; set; }
         public string? CoverImageUrl { get; set; }
         public DateTime? LastSynced { get; set; }
-        
 
+        public List<Chapter> Chapters { get; set; } = new List<Chapter>();
+
+
+ public Comic()
+    {
+        Title = string.Empty;
+        Author = string.Empty;
+        Genre = string.Empty;
+        Chapters = new List<Chapter>();
+    }
     }
 }

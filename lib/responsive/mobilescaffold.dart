@@ -1,9 +1,9 @@
-import 'package:comiksan/pages/comick_details.dart';
+import 'package:comiksan/providers/comic_providers.dart';
 import 'package:comiksan/section/Trendingsection.dart';
 import 'package:comiksan/section/followingsection.dart';
-import 'package:comiksan/section/footersection.dart';
 import 'package:comiksan/section/readingsection.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class Mobilescaffold extends StatefulWidget {
   const Mobilescaffold({super.key});
@@ -16,6 +16,16 @@ class _MobilescaffoldState extends State<Mobilescaffold> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
+  void initState() {
+    super.initState();
+    // Load comics when mobilescaffold initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final comicProvider = Provider.of<ComicProvider>(context, listen: false);
+      comicProvider.loadComics();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
@@ -25,27 +35,14 @@ class _MobilescaffoldState extends State<Mobilescaffold> {
           padding: const EdgeInsets.all(8.0),
           child: Column(
             children: [
-              Followingsection(
-                onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => ComickDetails()));
-                },
-              ),
-              Trendingsection(
-                onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => ComickDetails()));
-                },
-              ),
-              Readingsection(
-                onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => ComickDetails()));
-                },
-              ),
+              Followingsection(),
+              // Followingsection(), Trendingsection(), Readingsection()
             ],
           ),
         ),
       ),
 
-      bottomNavigationBar: Footersection(),
+      //bottomNavigationBar: Footersection(),
     );
   }
 }

@@ -1,72 +1,83 @@
-import 'package:comiksan/section/comiccard.dart';
-import 'package:flutter/material.dart';
+// import 'package:comiksan/pages/comick_details.dart';
+// import 'package:comiksan/providers/comic_providers.dart';
+// import 'package:comiksan/section/comiccard.dart';
+// import 'package:flutter/material.dart';
+// import 'package:provider/provider.dart';
 
-class Readingsection extends StatelessWidget {
-  final VoidCallback? onTap;
-  const Readingsection({super.key, this.onTap});
+// class Readingsection extends StatelessWidget {
+//   const Readingsection({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    // This data would usually come from your backend or database
-    final comics = [
-      {
-        'image': 'assets/bookImages/Demon_Slayer.jpg',
-        'title': 'Demon Slayer',
-        'chapter': '92',
-        'time': '5 hours ago',
-        'translator': 'Asurascans',
-      },
-      {
-        'image': 'assets/bookImages/Demon_Slayer.jpg',
-        'title': 'God of Martial Arts',
-        'chapter': '702',
-        'time': '5 hours ago',
-        'translator': 'Official',
-      },
-      {
-        'image': 'assets/bookImages/Demon_Slayer.jpg',
-        'title': 'The Knight King',
-        'chapter': '113',
-        'time': '6 hours ago',
-        'translator': 'Asurascans',
-      },
-      {
-        'image': 'assets/bookImages/Demon_Slayer.jpg',
-        'title': 'The Knight King',
-        'chapter': '113',
-        'time': '6 hours ago',
-        'translator': 'Asurascans',
-      },
-    ];
+//   @override
+//   Widget build(BuildContext context) {
+//     return Consumer<ComicProvider>(
+//       builder: (context, comicProvider, child) {
+//         print('🔴 ComicProvider consumer rebuilding');
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text("Reading", style: TextStyle(fontSize: 18, color: Colors.amber)),
-          SizedBox(height: 8),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children:
-                  comics.map((comic) {
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 2.0),
-                      child: ComicCard(
-                        downloadIcon: Icons.download,
-                        imagePath: comic['image']!,
-                        title: comic['title']!,
-                        chapter: comic['chapter']!,
-                        time: comic['time']!,
-                        translator: comic['translator']!,
-                      ),
-                    );
-                  }).toList(),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+//         final comics = comicProvider.comics;
+//         print('🔴 Comics count: ${comics.length}');
+//         // Handle loading state
+//         // if (comicProvider.isLoading) {
+//         //   return const Center(child: CircularProgressIndicator());
+//         // }
+
+//         // Handle error state
+//         if (comicProvider.error.isNotEmpty) {
+//           return Center(
+//             child: Text(
+//               "Error loading comics: ${comicProvider.error}",
+//               style: const TextStyle(color: Colors.white),
+//             ),
+//           );
+//         }
+
+//         // Handle empty state
+//         if (comics.isEmpty) {
+//           return const Center(
+//             child: Text("No comics in your following list", style: TextStyle(color: Colors.white)),
+//           );
+//         }
+
+//         // Show comics when data is available
+//         return Column(
+//           crossAxisAlignment: CrossAxisAlignment.start,
+//           children: [
+//             const Text("Reading", style: TextStyle(fontSize: 18, color: Colors.amber)),
+//             const SizedBox(height: 8),
+//             SingleChildScrollView(
+//               scrollDirection: Axis.horizontal,
+//               child: Row(
+//                 children:
+//                     comics.map((comic) {
+//                       return GestureDetector(
+//                         onTap: () {
+//                           // print('Comic chapters count: ${comic.chapters.length}');
+
+//                           // If chapters are too many, process them asynchronously
+//                           // if (comic.chapters.length > 50) {
+//                           //   print('WARNING: Large comic data - ${comic.chapters.length} chapters');
+//                           // }
+//                           Navigator.push(
+//                             context,
+//                             MaterialPageRoute(builder: (context) => ComickDetails(comic: comic)),
+//                           );
+//                         },
+//                         child: Padding(
+//                           padding: const EdgeInsets.all(0),
+//                           child: ComicCard(
+//                             downloadIcon: Icons.download,
+//                             comic: comic,
+//                             chapter: "Latest",
+//                             time: "Recently",
+//                             translator: comic.author,
+//                           ),
+//                         ),
+//                       );
+//                     }).toList(),
+//               ),
+//             ),
+//           ],
+//         );
+//       },
+//     );
+//   }
+// }

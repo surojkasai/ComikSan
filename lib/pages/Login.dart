@@ -1,4 +1,3 @@
-import 'package:comiksan/pages/homepage.dart';
 import 'package:comiksan/util/headfooter.dart';
 import 'package:comiksan/util/sign_in_google.dart';
 import 'package:firebase_auth/firebase_auth.dart';

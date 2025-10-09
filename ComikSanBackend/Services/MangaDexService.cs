@@ -1,5 +1,10 @@
-using ComikSanBackend.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
 using System.Text.Json;
+using System.Threading.Tasks;
+using ComikSanBackend.Models;
 
 namespace ComikSanBackend.Services
 {
@@ -10,200 +15,394 @@ namespace ComikSanBackend.Services
         public MangaDexService(HttpClient httpClient)
         {
             _httpClient = httpClient;
-            // Set a User-Agent header (good practice for APIs)
-            _httpClient.DefaultRequestHeaders.Add("User-Agent", "ComikSan/1.0");
+            _httpClient.DefaultRequestHeaders.Add("User-Agent", "ComikSanBackend/1.0");
         }
 
-     public async Task<List<Comic>> SearchMangaAsync(string title)
-{
-    try
-    {
-        var response = await _httpClient.GetAsync(
-            $"https://api.mangadex.org/manga?title={Uri.EscapeDataString(title)}&limit=10");
-        
-        if (response.IsSuccessStatusCode)
+        public async Task<List<Comic>> SearchMangaAsync(string title)
         {
-            var json = await response.Content.ReadAsStringAsync();
-            return ParseMangaDexResponse(json);
+            try
+            {
+                var response = await _httpClient.GetStringAsync($"https://api.mangadex.org/manga?title={Uri.EscapeDataString(title)}&limit=10&availableTranslatedLanguage[]=en");
+                return ParseMangaDexResponse(response);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error searching manga: {ex.Message}");
+                return new List<Comic>();
+            }
         }
-        
-        return new List<Comic>();
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Error searching MangaDex: {ex.Message}");
-        return new List<Comic>();
-    }
-}
 
-public async Task<Comic?> GetMangaByIdAsync(string mangaDexId)
-{
-    try
-    {
-        var response = await _httpClient.GetAsync(
-            $"https://api.mangadex.org/manga/{mangaDexId}");
-        
-        if (response.IsSuccessStatusCode)
-        {
-            var json = await response.Content.ReadAsStringAsync();
-            using var document = JsonDocument.Parse(json);
-            var dataElement = document.RootElement.GetProperty("data");
-            return ParseMangaElement(dataElement);
-        }
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Error getting manga by ID: {ex.Message}");
-    }
-    return null;
-}
-
-        private List<Comic> ParseMangaDexResponse(string json)
+        // ✅ ADD THIS MISSING METHOD
+        private List<Comic> ParseMangaDexResponse(string jsonResponse)
         {
             var comics = new List<Comic>();
 
             try
             {
-                using var document = JsonDocument.Parse(json);
-                var root = document.RootElement;
+                var jsonDoc = JsonDocument.Parse(jsonResponse);
+                var dataArray = jsonDoc.RootElement.GetProperty("data");
 
-                if (root.TryGetProperty("data", out var dataElement) &&
-                    dataElement.ValueKind == JsonValueKind.Array)
+                foreach (var item in dataArray.EnumerateArray())
                 {
-                    foreach (var mangaElement in dataElement.EnumerateArray())
+                    var attributes = item.GetProperty("attributes");
+                    var titleObject = attributes.GetProperty("title");
+
+                    // Get the first available title (usually English)
+                    var title = titleObject.EnumerateObject().FirstOrDefault().Value.GetString() ?? "Unknown Title";
+
+                    var descriptionObject = attributes.GetProperty("description");
+                    var description = descriptionObject.EnumerateObject().FirstOrDefault().Value.GetString() ?? "No description available";
+
+                    // Get tags for genre
+                    var tags = attributes.GetProperty("tags");
+                    var genres = new List<string>();
+
+                    foreach (var tag in tags.EnumerateArray())
                     {
-                        var comic = ParseMangaElement(mangaElement);
-                        if (comic != null)
-                            comics.Add(comic);
+                        var tagAttributes = tag.GetProperty("attributes");
+                        var tagName = tagAttributes.GetProperty("name").EnumerateObject().FirstOrDefault().Value.GetString();
+                        if (!string.IsNullOrEmpty(tagName))
+                        {
+                            genres.Add(tagName);
+                        }
                     }
+
+                    var genre = genres.Any() ? string.Join(", ", genres.Take(3)) : "Manga";
+
+                    var comic = new Comic
+                    {
+                        MangaDexId = item.GetProperty("id").GetString(),
+                        Title = title,
+                        Description = description,
+                        Author = "Unknown Author",
+                        Genre = genre,
+                        FollowerCount = 0, 
+                        //so this is backend–API sync time
+                        LastSynced = DateTime.UtcNow,
+                        Chapters = new List<Chapter>() // Initialize empty chapters list
+                    };
+
+                    comics.Add(comic);
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"JSON parsing error: {ex.Message}");
+                Console.WriteLine($"Error parsing MangaDex response: {ex.Message}");
             }
 
             return comics;
         }
 
-private Comic? ParseMangaElement(JsonElement mangaElement)
+
+
+        //- Get manga by ID
+        public async Task<Comic> GetMangaByIdAsync(string mangaDexId)
+        {
+            try
+            {
+                var response = await _httpClient.GetStringAsync($"https://api.mangadex.org/manga/{mangaDexId}");
+                var jsonDoc = JsonDocument.Parse(response);
+
+                var data = jsonDoc.RootElement.GetProperty("data");
+                var attributes = data.GetProperty("attributes");
+
+                var titleObject = attributes.GetProperty("title");
+                var title = titleObject.EnumerateObject().FirstOrDefault().Value.GetString() ?? "Unknown Title";
+
+                var descriptionObject = attributes.GetProperty("description");
+                var description = descriptionObject.EnumerateObject().FirstOrDefault().Value.GetString() ?? "No description available";
+
+                // Get tags for genre
+                var tags = attributes.GetProperty("tags");
+                var genres = new List<string>();
+
+                foreach (var tag in tags.EnumerateArray())
+                {
+                    var tagAttributes = tag.GetProperty("attributes");
+                    var tagName = tagAttributes.GetProperty("name").EnumerateObject().FirstOrDefault().Value.GetString();
+                    if (!string.IsNullOrEmpty(tagName))
+                    {
+                        genres.Add(tagName);
+                    }
+                }
+
+                var genre = genres.Any() ? string.Join(", ", genres.Take(3)) : "Manga";
+
+                return new Comic
+                {
+                    MangaDexId = mangaDexId,
+                    Title = title,
+                    Description = description,
+                    Author = "Unknown Author",
+                    Genre = genre,
+                    FollowerCount = 0,
+                    LastSynced = DateTime.UtcNow,
+                    Chapters = new List<Chapter>()
+                };
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting manga by ID: {ex.Message}");
+                return null;
+            }
+        }
+
+        // ✅ ADD THIS METHOD - Get cover filename
+        public async Task<string> GetCoverFilenameAsync(string mangaDexId)
+        {
+            try
+            {
+                // Get manga with cover relationship included
+                var response = await _httpClient.GetStringAsync($"https://api.mangadex.org/manga/{mangaDexId}?includes[]=cover_art");
+                var jsonDoc = JsonDocument.Parse(response);
+
+                var data = jsonDoc.RootElement.GetProperty("data");
+                var relationships = data.GetProperty("relationships");
+
+                // Find cover art relationship
+                foreach (var relationship in relationships.EnumerateArray())
+                {
+                    if (relationship.GetProperty("type").GetString() == "cover_art")
+                    {
+                        var coverId = relationship.GetProperty("id").GetString();
+
+                        // Get cover details to get the filename
+                        var coverResponse = await _httpClient.GetStringAsync($"https://api.mangadex.org/cover/{coverId}");
+                        var coverDoc = JsonDocument.Parse(coverResponse);
+                        var coverData = coverDoc.RootElement.GetProperty("data");
+                        var fileName = coverData.GetProperty("attributes").GetProperty("fileName").GetString();
+
+                        return fileName;
+                    }
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting cover filename: {ex.Message}");
+                return null;
+            }
+        }
+
+
+// Fix the ParseChaptersResponse method
+private List<Chapter> ParseChaptersResponse(string jsonResponse)
+{
+    var chapters = new List<Chapter>();
+
+    try
+    {
+        var jsonDoc = JsonDocument.Parse(jsonResponse);
+        var dataArray = jsonDoc.RootElement.GetProperty("data");
+
+        foreach (var item in dataArray.EnumerateArray())
+        {
+            var attributes = item.GetProperty("attributes");
+            var relationships = item.GetProperty("relationships");
+
+            // Get scanlation group name
+            string groupName = "Unknown Group";
+            foreach (var relationship in relationships.EnumerateArray())
+            {
+                if (relationship.GetProperty("type").GetString() == "scanlation_group")
+                {
+                    var groupAttributes = relationship.GetProperty("attributes");
+                    if (groupAttributes.TryGetProperty("name", out var nameElement))
+                    {
+                        groupName = nameElement.GetString() ?? "Unknown Group";
+                    }
+                    break;
+                }
+            }
+
+            // Parse chapter number safely
+            string chapterNumber = "0";
+            if (attributes.TryGetProperty("chapter", out var chapterElement) && chapterElement.ValueKind != JsonValueKind.Null)
+            {
+                chapterNumber = chapterElement.GetString() ?? "0";
+            }
+
+            // Parse title safely
+            string title = $"Chapter {chapterNumber}";
+            if (attributes.TryGetProperty("title", out var titleElement) && titleElement.ValueKind != JsonValueKind.Null)
+            {
+                var titleValue = titleElement.GetString();
+                if (!string.IsNullOrEmpty(titleValue))
+                {
+                    title = titleValue;
+                }
+            }
+
+            // Parse publish date safely
+            DateTime? publishedAt = null;
+            if (attributes.TryGetProperty("publishAt", out var publishElement) && 
+                publishElement.ValueKind != JsonValueKind.Null)
+            {
+                var publishString = publishElement.GetString();
+                if (DateTime.TryParse(publishString, out var parsedDate))
+                {
+                    publishedAt = parsedDate;
+                }
+            }
+
+             // ✅ PRINT DETAILED CHAPTER INFO
+            Console.WriteLine($"  - Chapter {chapterNumber}: '{title}'");
+            Console.WriteLine($"    Group: {groupName}, Published: {publishedAt}");
+
+            var chapter = new Chapter
+            {
+                 ChapterId = item.GetProperty("id").GetString() ?? string.Empty, // Use ChapterId here
+                Title = title,
+                ChapterNumber = chapterNumber,
+                Pages = new List<Page>(),
+                PublishedAt = publishedAt,
+                GroupName = groupName,
+                Volume = attributes.TryGetProperty("volume", out var volumeElement) ? volumeElement.GetString() ?? "" : ""
+            };
+
+            chapters.Add(chapter);
+        }
+
+        // Sort by chapter number numerically
+        chapters = chapters.OrderBy(c => 
+        {
+            if (decimal.TryParse(c.ChapterNumber, out decimal num))
+                return num;
+            return decimal.MaxValue;
+        }).ToList();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error parsing chapters response: {ex.Message}");
+    }
+
+    return chapters;
+}
+
+// ✅ ADD THIS PUBLIC METHOD - Get chapters for a manga
+public async Task<List<Chapter>> GetChaptersAsync(string mangaDexId, int limit = 100)
 {
     try
     {
-        // Extract basic info
-        var mangaId = mangaElement.GetProperty("id").GetString();
-        var attributes = mangaElement.GetProperty("attributes");
+          // ✅ PRINT START OF CHAPTER FETCH
+        Console.WriteLine($"=== FETCHING CHAPTERS ===");
+        Console.WriteLine($"MangaDex ID: {mangaDexId}");
+        Console.WriteLine($"Limit: {limit}");
+        // Get chapters for the manga
+                var response = await _httpClient.GetStringAsync(
+            $"https://api.mangadex.org/manga/{mangaDexId}/feed?translatedLanguage[]=en&limit={limit}&order[chapter]=desc&includes[]=scanlation_group"
+        );
         
-        // Get title (try English first, then Japanese, then any available)
-        var title = GetTitle(attributes.GetProperty("title"));
+        // ✅ PRINT RAW RESPONSE LENGTH (optional - can be large)
+        Console.WriteLine($"Raw response length: {response.Length} characters");
         
-        // Get description
-        var description = GetDescription(attributes.GetProperty("description"));
+        var chapters = ParseChaptersResponse(response);
         
-        // Get genres from tags
-        var genres = GetGenres(attributes.GetProperty("tags"));
+        // ✅ PRINT FINAL RESULT
+        Console.WriteLine($"=== CHAPTER FETCH COMPLETE ===");
+        Console.WriteLine($"Total chapters returned: {chapters.Count}");
+        Console.WriteLine();
         
-        // Get author from relationships (we'll simplify this for now)
-        var author = GetAuthor(mangaElement.GetProperty("relationships"));
+        return chapters;
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error getting chapters: {ex.Message}");
+        return new List<Chapter>();
+    }
+}
+public async Task<Chapter> GetChapterPagesAsync(string chapterId)
+{
+    try
+    {
+        // First get the at-home server URL
+        var atHomeResponse = await _httpClient.GetStringAsync($"https://api.mangadex.org/at-home/server/{chapterId}");
+        var atHomeDoc = JsonDocument.Parse(atHomeResponse);
         
-        return new Comic
+        var baseUrl = atHomeDoc.RootElement.GetProperty("baseUrl").GetString();
+        var chapterData = atHomeDoc.RootElement.GetProperty("chapter");
+        var hash = chapterData.GetProperty("hash").GetString();
+        var dataArray = chapterData.GetProperty("data").EnumerateArray().Select(x => x.GetString()).ToArray();
+        
+        // Get chapter details to include metadata
+        var chapterDetailsResponse = await _httpClient.GetStringAsync($"https://api.mangadex.org/chapter/{chapterId}");
+        var chapterDetailsDoc = JsonDocument.Parse(chapterDetailsResponse);
+        var chapterAttributes = chapterDetailsDoc.RootElement.GetProperty("data").GetProperty("attributes");
+
+        var pages = new List<Page>();
+        for (int i = 0; i < dataArray.Length; i++)
         {
-            MangaDexId = mangaId,
+            pages.Add(new Page
+            {
+                PageNumber = i + 1, // This should work now with the fixed Page model
+                ImageUrl = $"{baseUrl}/data/{hash}/{dataArray[i]}",
+                Width = 0, // MangaDex doesn't provide dimensions
+                Height = 0
+            });
+        }
+
+        // Parse chapter details safely
+        string chapterNumber = "0";
+        if (chapterAttributes.TryGetProperty("chapter", out var chapterElement) && chapterElement.ValueKind != JsonValueKind.Null)
+        {
+            chapterNumber = chapterElement.GetString() ?? "0";
+        }
+
+        string title = $"Chapter {chapterNumber}";
+        if (chapterAttributes.TryGetProperty("title", out var titleElement) && titleElement.ValueKind != JsonValueKind.Null)
+        {
+            var titleValue = titleElement.GetString();
+            if (!string.IsNullOrEmpty(titleValue))
+            {
+                title = titleValue;
+            }
+        }
+
+        DateTime? publishedAt = null;
+        if (chapterAttributes.TryGetProperty("publishAt", out var publishElement) && 
+            publishElement.ValueKind != JsonValueKind.Null)
+        {
+            var publishString = publishElement.GetString();
+            if (DateTime.TryParse(publishString, out var parsedDate))
+            {
+                publishedAt = parsedDate;
+            }
+        }
+
+        return new Chapter
+        {
+             ChapterId = chapterId, // Use ChapterId here
             Title = title,
-            Author = author,
-            Genre = genres,
-            Description = description,
-            CoverImageUrl = $"https://uploads.mangadex.org/covers/{mangaId}/cover.jpg",
-            FollowerCount = new Random().Next(1000, 100000),
-            LastSynced = DateTime.Now
+            ChapterNumber = chapterNumber,
+            Pages = pages,
+            PublishedAt = publishedAt,
+            Volume = chapterAttributes.TryGetProperty("volume", out var volumeElement) ? volumeElement.GetString() ?? "" : ""
         };
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Error parsing manga element: {ex.Message}");
+        Console.WriteLine($"Error getting chapter pages: {ex.Message}");
         return null;
     }
 }
 
-private string GetTitle(JsonElement titleObj)
-{
-    // Try English title first
-    if (titleObj.TryGetProperty("en", out var enTitle) && !string.IsNullOrEmpty(enTitle.GetString()))
-        return enTitle.GetString()!;
-    
-    // Try Japanese
-    if (titleObj.TryGetProperty("ja", out var jaTitle) && !string.IsNullOrEmpty(jaTitle.GetString()))
-        return jaTitle.GetString()!;
-    
-    // Try any available title
-    foreach (var property in titleObj.EnumerateObject())
-    {
-        if (!string.IsNullOrEmpty(property.Value.GetString()))
-            return property.Value.GetString()!;
-    }
-    
-    return "Unknown Title";
-}
 
-private string GetDescription(JsonElement descObj)
-{
-    if (descObj.TryGetProperty("en", out var enDesc) && !string.IsNullOrEmpty(enDesc.GetString()))
-        return enDesc.GetString()!;
-    
-    // Take first available description
-    foreach (var property in descObj.EnumerateObject())
-    {
-        var desc = property.Value.GetString();
-        if (!string.IsNullOrEmpty(desc) && desc.Length > 10) // Ensure it's meaningful
-            return desc.Length > 200 ? desc.Substring(0, 200) + "..." : desc;
-    }
-    
-    return "No description available";
-}
-
-private string GetGenres(JsonElement tagsArray)
-{
-    var genres = new List<string>();
-    
-    try
-    {
-        foreach (var tagElement in tagsArray.EnumerateArray())
+        // Optional: If you need the raw response method
+        public async Task<string> GetRawResponseAsync(string title)
         {
-            var tagAttributes = tagElement.GetProperty("attributes");
-            var tagName = tagAttributes.GetProperty("name").GetProperty("en").GetString();
-            
-            if (!string.IsNullOrEmpty(tagName) && genres.Count < 3) // Limit to 3 genres
-                genres.Add(tagName);
+            return await _httpClient.GetStringAsync($"https://api.mangadex.org/manga?title={Uri.EscapeDataString(title)}&limit=5");
         }
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Error parsing genres: {ex.Message}");
-    }
-    
-    return genres.Any() ? string.Join(", ", genres) : "Manga";
-}
 
-private string GetAuthor(JsonElement relationshipsArray)
-{
-    try
-    {
-        foreach (var relationship in relationshipsArray.EnumerateArray())
+        public void Dispose()
         {
-            if (relationship.GetProperty("type").GetString() == "author")
-            {
-                // In a real app, we'd look up the author name, but for now:
-                return "Eiichiro Oda"; // Placeholder - we'll fix this later
-            }
+            _httpClient?.Dispose();
         }
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Error getting author: {ex.Message}");
+
+
+
+
     }
     
-    return "Unknown Author";
-}
-        
-    }
+    
 }
