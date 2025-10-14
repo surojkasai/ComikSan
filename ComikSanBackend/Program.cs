@@ -27,14 +27,14 @@ builder.Services.AddCors(options =>
 });
 
 // Add Redis
-builder.Services.AddStackExchangeRedisCache(options =>
-{
-    options.Configuration = builder.Configuration.GetConnectionString("Redis");
-});
+// builder.Services.AddStackExchangeRedisCache(options =>
+// {
+//     options.Configuration = builder.Configuration.GetConnectionString("Redis");
+// });
 
 // Add this for the simple test
-builder.Services.AddSingleton<IConnectionMultiplexer>(sp => 
-    ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("Redis")));
+// builder.Services.AddSingleton<IConnectionMultiplexer>(sp => 
+//     ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("Redis")));
 
 // Register DataSeeder
 // builder.Services.AddScoped<DataSeeder>();
@@ -58,16 +58,16 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// app.UseHttpsRedirection();
+app.UseRouting();
 app.UseCors("AllowAll");
 // app.UseHttpsRedirection();
 app.UseAuthorization();
-app.UseRouting();
 app.MapControllers();
 
 //force for now
 // app.Urls.Add("http://localhost:5055");
-app.Urls.Add("http://192.168.101.15");
+// app.Urls.Add("http://192.168.101.12:5055");
+app.Urls.Add("http://10.20.86.25:5055");
 //to test a specific endpoint
 // app.MapGet("/", () => "ComikSan Backend API is running!");
 app.Run();

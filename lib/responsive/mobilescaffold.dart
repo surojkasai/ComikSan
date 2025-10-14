@@ -36,7 +36,7 @@ class _MobilescaffoldState extends State<Mobilescaffold> {
           child: Column(
             children: [
               Followingsection(),
-              // Followingsection(), Trendingsection(), Readingsection()
+              // Trendingsection(), Readingsection()
             ],
           ),
         ),

@@ -5,16 +5,19 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
 using ComikSanBackend.Models;
+using Microsoft.Extensions.Logging;
 
 namespace ComikSanBackend.Services
 {
     public class MangaDexService
     {
         private readonly HttpClient _httpClient;
+        private readonly ILogger<MangaDexService> _logger;
 
-        public MangaDexService(HttpClient httpClient)
+        public MangaDexService(HttpClient httpClient, ILogger<MangaDexService> logger)
         {
             _httpClient = httpClient;
+            _logger = logger;
             _httpClient.DefaultRequestHeaders.Add("User-Agent", "ComikSanBackend/1.0");
         }
 
@@ -186,7 +189,6 @@ namespace ComikSanBackend.Services
         }
 
 
-// Fix the ParseChaptersResponse method
 private List<Chapter> ParseChaptersResponse(string jsonResponse)
 {
     var chapters = new List<Chapter>();
@@ -386,6 +388,84 @@ public async Task<Chapter> GetChapterPagesAsync(string chapterId)
         return null;
     }
 }
+
+
+// private readonly Dictionary<string, (List<Comic> data, DateTime expiry)> _memoryCache = new();
+// private readonly object _cacheLock = new object();
+
+// public async Task<List<Comic>> GetTrendingMangaAsync(int limit = 20)
+// {
+//     var cacheKey = $"trending:{limit}";
+    
+//     // Simple in-memory cache check
+//     lock (_cacheLock)
+//     {
+//         if (_memoryCache.ContainsKey(cacheKey) && _memoryCache[cacheKey].expiry > DateTime.Now)
+//         {
+//             return _memoryCache[cacheKey].data;
+//         }
+//     }
+
+//     try
+//     {
+//         var response = await _httpClient.GetStringAsync(
+//             $"https://api.mangadex.org/manga?limit={limit}&order[followedCount]=desc&includes[]=cover_art&availableTranslatedLanguage[]=en"
+//         );
+        
+//         var results = ParseMangaDexResponse(response);
+        
+//         // Store in memory cache for 1 hour
+//         lock (_cacheLock)
+//         {
+//             _memoryCache[cacheKey] = (results, DateTime.Now.AddHours(1));
+//         }
+        
+//         return results;
+//     }
+//     catch (Exception ex)
+//     {
+//         _logger.LogError($"Error getting trending manga: {ex.Message}");
+//         return new List<Comic>();
+//     }
+// }
+
+// public async Task<List<Comic>> GetRecentlyUpdatedMangaAsync(int limit = 20)
+// {
+//     try
+//     {
+//         // Get manga with recently uploaded chapters
+//         var response = await _httpClient.GetStringAsync(
+//             $"https://api.mangadex.org/manga?limit={limit}&order[latestUploadedChapter]=desc&includes[]=cover_art&availableTranslatedLanguage[]=en"
+//         );
+
+//         var results = ParseMangaDexResponse(response);
+//         return results;
+//     }
+//     catch (Exception ex)
+//     {
+//         _logger.LogError($"Error getting recently updated manga: {ex.Message}");
+//         return new List<Comic>();
+//     }
+// }
+
+// public async Task<List<Comic>> GetNewMangaAsync(int limit = 20)
+// {
+//     try
+//     {
+//         // Get newly created manga
+//         var response = await _httpClient.GetStringAsync(
+//             $"https://api.mangadex.org/manga?limit={limit}&order[createdAt]=desc&includes[]=cover_art&availableTranslatedLanguage[]=en"
+//         );
+
+//         var results = ParseMangaDexResponse(response);
+//         return results;
+//     }
+//     catch (Exception ex)
+//     {
+//         _logger.LogError($"Error getting new manga: {ex.Message}");
+//         return new List<Comic>();
+//     }
+// }
 
 
         // Optional: If you need the raw response method

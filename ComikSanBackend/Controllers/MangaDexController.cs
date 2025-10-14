@@ -3,7 +3,6 @@ using ComikSanBackend.Services;
 using ComikSanBackend.Data;  
 using ComikSanBackend.Models;
 using System.Text.Json;
-using StackExchange.Redis; 
 using System.Net.Http; 
 
 namespace ComikSanBackend.Controllers
@@ -22,28 +21,7 @@ namespace ComikSanBackend.Controllers
             _context = context; // Initialize the context
         }
 
-        [HttpGet("test")]
-        public async Task<IActionResult> TestSearch([FromQuery] string title = "One Piece")
-        {
-            var results = await _mangaDexService.SearchMangaAsync(title);
-
-            if (results.Any())
-            {
-                return Ok(new
-                {
-                    message = $"✅ Found {results.Count} manga!",
-                    manga = results
-                });
-            }
-            else
-            {
-                return Ok(new
-                {
-                    message = $"❌ No results found for '{title}'",
-                    suggestion = "Try a different title like 'Naruto' or 'Attack on Titan'"
-                });
-            }
-        }
+        
 
         [HttpGet("search")]
         public async Task<IActionResult> SearchManga([FromQuery] string title)
@@ -54,8 +32,6 @@ namespace ComikSanBackend.Controllers
             var results = await _mangaDexService.SearchMangaAsync(title);
             return Ok(results);
         }
-
-
 
         [HttpPost("import/{mangaDexId}")]
         public async Task<IActionResult> ImportManga(string mangaDexId)
@@ -174,14 +150,13 @@ namespace ComikSanBackend.Controllers
             }
         }
 
-        [HttpGet("all-comics")]
+[HttpGet("all-comics")]
         public IActionResult GetAllComics()
         {
             var comics = _context.Comics.ToList();
             return Ok(comics);
         }
-
-        [HttpGet("manga/{mangaDexId}/chapters")]
+[HttpGet("manga/{mangaDexId}/chapters")]
         public async Task<ActionResult<List<Chapter>>> GetChapters(string mangaDexId, [FromQuery] int limit = 100)
         {
             try
@@ -213,7 +188,7 @@ namespace ComikSanBackend.Controllers
             }
         }
 
-        [HttpGet("chapters/{chapterId}/pages")]
+[HttpGet("chapters/{chapterId}/pages")]
         public async Task<IActionResult> GetChapterPages(string chapterId)
         {
             try
@@ -229,98 +204,7 @@ namespace ComikSanBackend.Controllers
                 return BadRequest($"Error getting chapter pages: {ex.Message}");
             }
         }
-        [HttpGet("test-redis")]
-        public IActionResult TestRedis([FromServices] IConnectionMultiplexer redis)
-        {
-            try
-            {
-                var db = redis.GetDatabase();
-
-                // Simple test: set and get a value
-                db.StringSet("test_key", "Hello Redis!", TimeSpan.FromMinutes(1));
-                var value = db.StringGet("test_key");
-
-                return Ok(new
-                {
-                    status = "✅ Redis is connected and working!",
-                    testValue = value.ToString(),
-                    message = "Redis is ready for caching manga data!"
-                });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new
-                {
-                    error = "❌ Redis connection failed",
-                    details = ex.Message
-                });
-            }
-        }
-[HttpGet("cache-stats")]
-public async Task<IActionResult> GetCacheStats([FromServices] IConnectionMultiplexer redis)
-{
-    try
-    {
-        var db = redis.GetDatabase();
-        var endpoints = redis.GetEndPoints();
-        var server = redis.GetServer(endpoints.First());
         
-        var keys = server.Keys(pattern: "*").ToArray();
-        
-        var stats = new
-        {
-            TotalCacheKeys = keys.Length,
-            SearchKeys = keys.Count(k => k.ToString().StartsWith("search:")),
-            ChapterKeys = keys.Count(k => k.ToString().StartsWith("chapters:")),
-            ChapterPageKeys = keys.Count(k => k.ToString().StartsWith("chapter_pages:")),
-            MangaKeys = keys.Count(k => k.ToString().StartsWith("manga:")),
-            RedisStatus = redis.IsConnected ? "Connected" : "Disconnected",
-            ServerInfo = server.ServerType.ToString()
-        };
-        
-        return Ok(stats);
-    }
-    catch (Exception ex)
-    {
-        return BadRequest(new { error = ex.Message });
-    }
-}
-        [HttpPost("cleanup-non-english")]
-        public IActionResult CleanupNonEnglish()
-        {
-            try
-            {
-                // Load all comics into memory first
-                var allComics = _context.Comics
-                    .Where(c => c.Description != null)
-                    .AsEnumerable() // <--- switch to client evaluation
-                    .ToList();
-
-                var nonEnglishComics = allComics
-                    .Where(c => !IsMostlyEnglish(c.Description))
-                    .ToList();
-
-                if (!nonEnglishComics.Any())
-                    return Ok(new { message = "✅ All comics are English." });
-
-                _context.Comics.RemoveRange(nonEnglishComics);
-                _context.SaveChanges();
-
-                return Ok(new
-                {
-                    message = $"✅ Removed {nonEnglishComics.Count} non-English comics",
-                    removedTitles = nonEnglishComics.Select(c => c.Title).ToList()
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new
-                {
-                    error = "Failed to clean up non-English comics",
-                    details = ex.Message
-                });
-            }
-        }
         [HttpDelete("delete/{id}")]
         public async Task<IActionResult> DeleteComicById(int id)
         {
@@ -351,7 +235,50 @@ public async Task<IActionResult> GetCacheStats([FromServices] IConnectionMultipl
                     details = ex.Message
                 });
             }
+            
         }
+
+// [HttpGet("trending")]
+// public async Task<IActionResult> GetTrendingManga([FromQuery] int limit = 20)
+// {
+//     try
+//     {
+//         var trendingManga = await _mangaDexService.GetTrendingMangaAsync(limit);
+//         return Ok(trendingManga);
+//     }
+//     catch (Exception ex)
+//     {
+//         return BadRequest($"Error getting trending manga: {ex.Message}");
+//     }
+// }
+
+// [HttpGet("recently-updated")]
+// public async Task<IActionResult> GetRecentlyUpdatedManga([FromQuery] int limit = 20)
+// {
+//     try
+//     {
+//         var updatedManga = await _mangaDexService.GetRecentlyUpdatedMangaAsync(limit);
+//         return Ok(updatedManga);
+//     }
+//     catch (Exception ex)
+//     {
+//         return BadRequest($"Error getting recently updated manga: {ex.Message}");
+//     }
+// }
+
+// [HttpGet("new")]
+// public async Task<IActionResult> GetNewManga([FromQuery] int limit = 20)
+// {
+//     try
+//     {
+//         var newManga = await _mangaDexService.GetNewMangaAsync(limit);
+//         return Ok(newManga);
+//     }
+//     catch (Exception ex)
+//     {
+//         return BadRequest($"Error getting new manga: {ex.Message}");
+//     }
+// }
 
         // Helper function
         private bool IsMostlyEnglish(string text)
@@ -362,33 +289,7 @@ public async Task<IActionResult> GetCacheStats([FromServices] IConnectionMultipl
         }
 
 
-        [HttpPost("cleanup-broken-covers")]
-        public IActionResult CleanupBrokenCovers()
-        {
-            try
-            {
-                var brokenComics = _context.Comics
-                    .Where(c => c.CoverImageUrl != null && c.CoverImageUrl.Contains("/cover.jpg"))
-                    .ToList();
-
-                _context.Comics.RemoveRange(brokenComics);
-                _context.SaveChanges();
-
-                return Ok(new
-                {
-                    message = $"✅ Removed {brokenComics.Count} comics with broken cover URLs",
-                    removedTitles = brokenComics.Select(c => c.Title).ToList()
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new
-                {
-                    error = "Failed to cleanup broken covers",
-                    details = ex.Message
-                });
-            }
-        }
+        
     }
 
     

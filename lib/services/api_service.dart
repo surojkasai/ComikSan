@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 
 class ApiService {
   // static const String baseUrl = 'http://10.0.2.2:5055/api'; // For Android emulator
-  static const String baseUrl = Environment.baseUrl;
+  static const String baseUrl = 'http://10.20.86.25:5055/api';
   final http.Client client = http.Client();
   // static const String baseUrl = 'http://192.168.101.17/api';
   // static const String baseUrl = 'http://localhost:5055/api'; // For iOS simulator
@@ -13,7 +13,7 @@ class ApiService {
 
   Future<List<Comic>> getComics() async {
     try {
-      final url = Uri.parse('$baseUrl/comics');
+      final url = Uri.parse('$baseUrl/MangaDex/all-comics');
       print('🔍 Attempting to call: $url');
       print('🔍 Full URL breakdown:');
       print('   - Scheme: ${url.scheme}');
@@ -116,6 +116,56 @@ class ApiService {
       throw Exception('Failed to import manga: $e');
     }
   }
+
+  // Future<List<Comic>> getTrendingManga({int limit = 5}) async {
+  //   try {
+  //     final response = await http.get(Uri.parse('$baseUrl/api/MangaDex/trending?limit=$limit'));
+
+  //     if (response.statusCode == 200) {
+  //       final List<dynamic> data = json.decode(response.body);
+  //       return data.map((item) => Comic.fromJson(item)).toList();
+  //     } else {
+  //       throw Exception('Failed to load trending manga: ${response.statusCode}');
+  //     }
+  //   } catch (e) {
+  //     print('Error getting trending manga: $e');
+  //     rethrow;
+  //   }
+  // }
+
+  // Future<List<Comic>> getRecentlyUpdatedManga({int limit = 5}) async {
+  //   try {
+  //     final response = await http.get(
+  //       Uri.parse('$baseUrl/api/MangaDex/recently-updated?limit=$limit'),
+  //     );
+
+  //     if (response.statusCode == 200) {
+  //       final List<dynamic> data = json.decode(response.body);
+  //       return data.map((item) => Comic.fromJson(item)).toList();
+  //     } else {
+  //       throw Exception('Failed to load recently updated manga: ${response.statusCode}');
+  //     }
+  //   } catch (e) {
+  //     print('Error getting recently updated manga: $e');
+  //     rethrow;
+  //   }
+  // }
+
+  // Future<List<Comic>> getNewManga({int limit = 5}) async {
+  //   try {
+  //     final response = await http.get(Uri.parse('$baseUrl/api/MangaDex/new?limit=$limit'));
+
+  //     if (response.statusCode == 200) {
+  //       final List<dynamic> data = json.decode(response.body);
+  //       return data.map((item) => Comic.fromJson(item)).toList();
+  //     } else {
+  //       throw Exception('Failed to load new manga: ${response.statusCode}');
+  //     }
+  //   } catch (e) {
+  //     print('Error getting new manga: $e');
+  //     rethrow;
+  //   }
+  // }
 
   void dispose() {
     client.close();
