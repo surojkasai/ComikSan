@@ -21,17 +21,64 @@ namespace ComikSanBackend.Controllers
             _context = context; // Initialize the context
         }
 
-        
+
 
         [HttpGet("search")]
         public async Task<IActionResult> SearchManga([FromQuery] string title)
         {
             if (string.IsNullOrEmpty(title))
                 return BadRequest("Title is required");
+                var results = await _mangaDexService.SearchMangaAsync(title);
+                if (!results.Any())
+                    return NotFound($"No manga found with title '{title}'");
+foreach (var manga in results.Take(3))
+                {
+                    // Check if already exists
+                    if (_context.Comics.Any(c => c.MangaDexId == manga.MangaDexId))
+                        continue;
 
-            var results = await _mangaDexService.SearchMangaAsync(title);
+                    // ✅ NEW: Get the actual cover filename for each manga
+                    var coverFilename = await _mangaDexService.GetCoverFilenameAsync(manga.MangaDexId);
+                    if (!string.IsNullOrEmpty(coverFilename))
+                    {
+                        manga.CoverImageUrl = $"https://uploads.mangadex.org/covers/{manga.MangaDexId}/{coverFilename}";
+                        Console.WriteLine($"✅ Cover URL set for {manga.Title}: {manga.CoverImageUrl}");
+                    }
+
+                    _context.Comics.Add(manga);
+                }
             return Ok(results);
         }
+        [HttpGet("debug-search")]
+public async Task<IActionResult> DebugSearch([FromQuery] string title)
+{
+    try
+    {
+        var results = await _mangaDexService.SearchMangaAsync(title);
+        
+        // Log each result with cover URL info
+        foreach (var comic in results)
+        {
+            Console.WriteLine($"📖 Title: {comic.Title}");
+            Console.WriteLine($"   CoverImageUrl: {comic.CoverImageUrl ?? "NULL"}");
+            Console.WriteLine($"   MangaDexId: {comic.MangaDexId}");
+        }
+        
+        return Ok(new {
+            count = results.Count,
+            results = results.Select(r => new {
+                title = r.Title,
+                coverImageUrl = r.CoverImageUrl,
+                mangaDexId = r.MangaDexId,
+                hasCover = !string.IsNullOrEmpty(r.CoverImageUrl)
+            })
+        });
+    }
+    catch (Exception ex)
+    {
+        return BadRequest($"Debug error: {ex.Message}");
+    }
+}
 
         [HttpPost("import/{mangaDexId}")]
         public async Task<IActionResult> ImportManga(string mangaDexId)

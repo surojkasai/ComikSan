@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 
 class ApiService {
   // static const String baseUrl = 'http://10.0.2.2:5055/api'; // For Android emulator
-  static const String baseUrl = 'http://10.20.86.25:5055/api';
+  static const String baseUrl = 'http://10.20.86.114:5055/api';
   final http.Client client = http.Client();
   // static const String baseUrl = 'http://192.168.101.17/api';
   // static const String baseUrl = 'http://localhost:5055/api'; // For iOS simulator
@@ -35,24 +35,6 @@ class ApiService {
     } catch (e) {
       print('❌ Error details: $e');
       throw Exception('Failed to load comics: $e');
-    }
-  }
-
-  Future<List<Comic>> searchManga(String title) async {
-    try {
-      final response = await client.get(
-        Uri.parse('$baseUrl/mangadex/search?title=${Uri.encodeQueryComponent(title)}'),
-        headers: {'Content-Type': 'application/json'},
-      );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> jsonList = json.decode(response.body);
-        return jsonList.map((json) => Comic.fromJson(json)).toList();
-      } else {
-        throw Exception('Failed to search manga: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Failed to search manga: $e');
     }
   }
 
@@ -99,20 +81,29 @@ class ApiService {
     }
   }
 
-  Future<Comic> importManga(String mangaDexId) async {
+  // In api_service.dart - Add this method
+  Future<ImportResult> importMangaByTitle(String title) async {
     try {
+      print('🔄 ApiService: Importing manga by title: $title');
+
       final response = await client.post(
-        Uri.parse('$baseUrl/mangadex/import/$mangaDexId'),
+        Uri.parse('$baseUrl/mangadex/import-by-title?title=${Uri.encodeQueryComponent(title)}'),
         headers: {'Content-Type': 'application/json'},
       );
 
-      if (response.statusCode == 200 || response.statusCode == 409) {
+      if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        return Comic.fromJson(jsonResponse['comic']);
+        print('✅ Import successful: ${jsonResponse['message']}');
+        return ImportResult.fromJson(jsonResponse);
+      } else if (response.statusCode == 409) {
+        // Already exists - treat as success for user experience
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+        return ImportResult.fromJson(jsonResponse);
       } else {
         throw Exception('Failed to import manga: ${response.statusCode}');
       }
     } catch (e) {
+      print('❌ ApiService: Import error: $e');
       throw Exception('Failed to import manga: $e');
     }
   }

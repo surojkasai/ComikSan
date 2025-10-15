@@ -1,8 +1,11 @@
+import 'package:comiksan/pages/comick_details.dart';
+import 'package:comiksan/providers/comic_providers.dart';
 import 'package:comiksan/section/footersection.dart';
 import 'package:comiksan/services/search_service.dart';
 import 'package:comiksan/model/comic.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class Headfooter extends StatefulWidget {
   final Widget body;
@@ -29,7 +32,9 @@ class _HeadfooterState extends State<Headfooter> {
     });
 
     try {
+      print('🔍 Starting search for: $query');
       final List<Comic> results = await SearchService.searchManga(query);
+      print('✅ Search completed, found ${results.length} results');
 
       // Close the dialog
       Navigator.of(context).pop();
@@ -101,15 +106,22 @@ class _HeadfooterState extends State<Headfooter> {
                   borderRadius: BorderRadius.circular(8),
                   child: Image.network(
                     comic.coverImageUrl!,
+                    fit: BoxFit.cover,
                     width: 50,
                     height: 70,
-                    fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
                         width: 50,
                         height: 70,
                         color: Colors.grey[700],
-                        child: Icon(Icons.image, color: Colors.white54),
+                        child: Icon(Icons.broken_image, color: Colors.white54),
+                      );
+                    },
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        color: Colors.grey[800],
+                        child: const Center(child: CircularProgressIndicator(color: Colors.amber)),
                       );
                     },
                   ),
@@ -145,7 +157,7 @@ class _HeadfooterState extends State<Headfooter> {
 
     // Navigate to comic details page
     // You'll need to create this page or use your existing one
-    Navigator.pushNamed(context, '/comic-details', arguments: comic);
+    Navigator.push(context, MaterialPageRoute(builder: (context) => ComickDetails(comic: comic)));
   }
 
   void _showSearchDialog() {

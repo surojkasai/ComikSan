@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:comiksan/model/comic.dart';
 import 'package:comiksan/providers/comic_providers.dart';
 import 'package:comiksan/section/ChapterlistSection.dart';
+import 'package:comiksan/services/api_service.dart';
 import 'package:comiksan/util/headfooter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -18,6 +19,70 @@ class ComickDetails extends StatefulWidget {
 }
 
 class _ComickDetailsState extends State<ComickDetails> {
+  final ApiService _apiService = ApiService();
+  bool _isImporting = false;
+  // ✅ ADD THIS METHOD - Handle import functionality
+  Future<void> _importComic() async {
+    if (_isImporting) return; // Prevent multiple clicks
+
+    setState(() {
+      _isImporting = true;
+    });
+
+    try {
+      print('🔄 Starting import for: ${widget.comic.title}');
+
+      // Show loading snackbar
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              CircularProgressIndicator(color: Colors.white),
+              SizedBox(width: 16),
+              Text('Adding "${widget.comic.title}" to library...'),
+            ],
+          ),
+          duration: Duration(seconds: 5),
+        ),
+      );
+
+      // Call the import API
+      final result = await _apiService.importMangaByTitle(widget.comic.title);
+
+      // Hide loading snackbar
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result.message),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 3),
+        ),
+      );
+
+      print('✅ Import successful: ${result.message}');
+    } catch (e) {
+      // Hide loading snackbar
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to add to library: $e'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+
+      print('❌ Import failed: $e');
+    } finally {
+      setState(() {
+        _isImporting = false;
+      });
+    }
+  }
+
   // Generate details from the Comic object
   List<Map<String, String>> get details {
     return [
@@ -203,21 +268,66 @@ class _ComickDetailsState extends State<ComickDetails> {
                                   ),
                                 ),
                                 const SizedBox(height: 10),
+                                // Flexible(
+                                //   child: TextButton(
+                                //     onPressed: () {},
+                                //     style: TextButton.styleFrom(
+                                //       backgroundColor: Colors.blue,
+                                //       shape: RoundedRectangleBorder(
+                                //         borderRadius: BorderRadius.circular(12),
+                                //       ),
+                                //       minimumSize: Size(100, 50),
+                                //     ),
+
+                                //     child: Text(
+                                //       'Reading',
+                                //       style: TextStyle(fontSize: 15, color: Colors.white),
+                                //     ),
+                                //   ),
+                                // ),
                                 Flexible(
                                   child: TextButton(
-                                    onPressed: () {},
+                                    onPressed:
+                                        _isImporting ? null : _importComic, // Disable when loading
                                     style: TextButton.styleFrom(
-                                      backgroundColor: Colors.blue,
+                                      backgroundColor:
+                                          _isImporting
+                                              ? Colors.grey
+                                              : Colors.blue, // Change color when loading
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       minimumSize: Size(100, 50),
                                     ),
-
-                                    child: Text(
-                                      'Reading',
-                                      style: TextStyle(fontSize: 15, color: Colors.white),
-                                    ),
+                                    child:
+                                        _isImporting
+                                            ? Row(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                SizedBox(
+                                                  width: 16,
+                                                  height: 16,
+                                                  child: CircularProgressIndicator(
+                                                    strokeWidth: 2,
+                                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                                      Colors.white,
+                                                    ),
+                                                  ),
+                                                ),
+                                                SizedBox(width: 8),
+                                                Text(
+                                                  'Adding...',
+                                                  style: TextStyle(
+                                                    fontSize: 15,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                              ],
+                                            )
+                                            : Text(
+                                              'Add to Library', // Consider updating text to reflect the action
+                                              style: TextStyle(fontSize: 15, color: Colors.white),
+                                            ),
                                   ),
                                 ),
                                 //IconButton(onPressed: () {}, icon: Icon(Icons.download_for_offline)),

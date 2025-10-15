@@ -1,4 +1,5 @@
 import 'package:comiksan/model/comic.dart';
+import 'package:comiksan/services/search_service.dart';
 import 'package:flutter/foundation.dart';
 import '../services/api_service.dart';
 
@@ -69,7 +70,7 @@ class ComicProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      _searchResults = await _apiService.searchManga(query);
+      _searchResults = await SearchService.searchManga(query);
       _error = '';
     } catch (e) {
       _error = e.toString();
@@ -85,7 +86,7 @@ class ComicProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      await _apiService.importManga(mangaDexId);
+      await _apiService.importMangaByTitle(mangaDexId);
       // Reload comics after import
       await loadComics();
       _error = '';
