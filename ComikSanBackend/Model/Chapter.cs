@@ -23,7 +23,7 @@ namespace ComikSanBackend.Models
         public string ChapterId { get; set; } // MangaDex chapter ID
         public string Title { get; set; }
         public string ChapterNumber { get; set; }
-        public string GroupName { get; set; }
+        public string? GroupName { get; set; }
         public string Volume { get; set; }
         public List<Page> Pages { get; set; }
         public DateTime? PublishedAt { get; set; }

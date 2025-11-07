@@ -1,9 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using ComikSanBackend.Services;
-using ComikSanBackend.Data;  
+using ComikSanBackend.Data;
 using ComikSanBackend.Models;
 using System.Text.Json;
-using System.Net.Http; 
+using System.Net.Http;
+using Microsoft.EntityFrameworkCore;
 
 namespace ComikSanBackend.Controllers
 {
@@ -23,62 +24,63 @@ namespace ComikSanBackend.Controllers
 
 
 
-        [HttpGet("search")]
-        public async Task<IActionResult> SearchManga([FromQuery] string title)
-        {
-            if (string.IsNullOrEmpty(title))
-                return BadRequest("Title is required");
-                var results = await _mangaDexService.SearchMangaAsync(title);
-                if (!results.Any())
-                    return NotFound($"No manga found with title '{title}'");
-foreach (var manga in results.Take(3))
-                {
-                    // Check if already exists
-                    if (_context.Comics.Any(c => c.MangaDexId == manga.MangaDexId))
-                        continue;
-
-                    // ✅ NEW: Get the actual cover filename for each manga
-                    var coverFilename = await _mangaDexService.GetCoverFilenameAsync(manga.MangaDexId);
-                    if (!string.IsNullOrEmpty(coverFilename))
-                    {
-                        manga.CoverImageUrl = $"https://uploads.mangadex.org/covers/{manga.MangaDexId}/{coverFilename}";
-                        Console.WriteLine($"✅ Cover URL set for {manga.Title}: {manga.CoverImageUrl}");
-                    }
-
-                    _context.Comics.Add(manga);
-                }
-            return Ok(results);
-        }
-        [HttpGet("debug-search")]
-public async Task<IActionResult> DebugSearch([FromQuery] string title)
+     [HttpGet("search")]
+public async Task<IActionResult> SearchManga([FromQuery] string title)
 {
-    try
+    if (string.IsNullOrEmpty(title))
+        return BadRequest("Title is required");
+    
+    var results = await _mangaDexService.SearchMangaAsync(title);
+    if (!results.Any())
+        return NotFound($"No manga found with title '{title}'");
+
+    // ✅ FIXED: Don't import during search - just return search results
+    // If you want search results to have chapters, fetch them here:
+    var enhancedResults = new List<Comic>();
+    foreach (var manga in results.Take(3))
     {
-        var results = await _mangaDexService.SearchMangaAsync(title);
+        // Fetch chapters for search results display
+        var chapters = await _mangaDexService.GetFirstAndLatestChaptersAsync(manga.MangaDexId);
+        manga.Chapters = chapters;
+        enhancedResults.Add(manga);
         
-        // Log each result with cover URL info
-        foreach (var comic in results)
-        {
-            Console.WriteLine($"📖 Title: {comic.Title}");
-            Console.WriteLine($"   CoverImageUrl: {comic.CoverImageUrl ?? "NULL"}");
-            Console.WriteLine($"   MangaDexId: {comic.MangaDexId}");
-        }
-        
-        return Ok(new {
-            count = results.Count,
-            results = results.Select(r => new {
-                title = r.Title,
-                coverImageUrl = r.CoverImageUrl,
-                mangaDexId = r.MangaDexId,
-                hasCover = !string.IsNullOrEmpty(r.CoverImageUrl)
-            })
-        });
+        Console.WriteLine($"✅ Search result: {manga.Title} - {chapters.Count} chapters");
     }
-    catch (Exception ex)
-    {
-        return BadRequest($"Debug error: {ex.Message}");
-    }
+
+    return Ok(enhancedResults);
 }
+        [HttpGet("debug-search")]
+        public async Task<IActionResult> DebugSearch([FromQuery] string title)
+        {
+            try
+            {
+                var results = await _mangaDexService.SearchMangaAsync(title);
+
+                // Log each result with cover URL info
+                foreach (var comic in results)
+                {
+                    Console.WriteLine($"📖 Title: {comic.Title}");
+                    Console.WriteLine($"   CoverImageUrl: {comic.CoverImageUrl ?? "NULL"}");
+                    Console.WriteLine($"   MangaDexId: {comic.MangaDexId}");
+                }
+
+                return Ok(new
+                {
+                    count = results.Count,
+                    results = results.Select(r => new
+                    {
+                        title = r.Title,
+                        coverImageUrl = r.CoverImageUrl,
+                        mangaDexId = r.MangaDexId,
+                        hasCover = !string.IsNullOrEmpty(r.CoverImageUrl)
+                    })
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Debug error: {ex.Message}");
+            }
+        }
 
         [HttpPost("import/{mangaDexId}")]
         public async Task<IActionResult> ImportManga(string mangaDexId)
@@ -101,18 +103,19 @@ public async Task<IActionResult> DebugSearch([FromQuery] string title)
                 if (manga == null)
                     return NotFound($"Manga with ID {mangaDexId} not found");
 
-                // ✅ NEW: Get the actual cover filename
+                // ✅ FIXED: Get cover filename
                 var coverFilename = await _mangaDexService.GetCoverFilenameAsync(mangaDexId);
                 if (!string.IsNullOrEmpty(coverFilename))
                 {
-                    // ✅ Construct the CORRECT cover URL with actual filename
                     manga.CoverImageUrl = $"https://uploads.mangadex.org/covers/{mangaDexId}/{coverFilename}";
                     Console.WriteLine($"✅ Cover URL set to: {manga.CoverImageUrl}");
                 }
-                else
-                {
-                    Console.WriteLine($"⚠️ No cover found for manga: {manga.Title}");
-                }
+
+                // ✅ NEW: Fetch first and latest chapters for this comic
+                Console.WriteLine($"🔄 Fetching chapters for: {manga.Title}");
+                var chapters = await _mangaDexService.GetFirstAndLatestChaptersAsync(mangaDexId);
+                manga.Chapters = chapters;
+                Console.WriteLine($"✅ Loaded {chapters.Count} chapters for {manga.Title}");
 
                 // Save to database
                 _context.Comics.Add(manga);
@@ -120,9 +123,10 @@ public async Task<IActionResult> DebugSearch([FromQuery] string title)
 
                 return Ok(new
                 {
-                    message = $"✅ Successfully imported '{manga.Title}'",
+                    message = $"✅ Successfully imported '{manga.Title}' with {chapters.Count} chapters",
                     comic = manga,
-                    coverUrl = manga.CoverImageUrl
+                    coverUrl = manga.CoverImageUrl,
+                    chaptersCount = chapters.Count
                 });
             }
             catch (Exception ex)
@@ -136,74 +140,116 @@ public async Task<IActionResult> DebugSearch([FromQuery] string title)
         }
 
 
-        // NEW: Import by title (easier to use)
         [HttpPost("import-by-title")]
-        public async Task<IActionResult> ImportByTitle([FromQuery] string title)
+public async Task<IActionResult> ImportByTitle([FromQuery] string title)
+{
+    try
+    {
+        if (string.IsNullOrEmpty(title))
+            return BadRequest("Title is required");
+
+        var results = await _mangaDexService.SearchMangaAsync(title);
+        if (!results.Any())
+            return NotFound($"No manga found with title '{title}'");
+
+        var importedComics = new List<Comic>();
+
+        foreach (var manga in results.Take(3))
         {
-            try
+            // Check if already exists
+            if (_context.Comics.Any(c => c.MangaDexId == manga.MangaDexId))
+                continue;
+
+            // Get cover image
+            var coverFilename = await _mangaDexService.GetCoverFilenameAsync(manga.MangaDexId);
+            if (!string.IsNullOrEmpty(coverFilename))
             {
-                if (string.IsNullOrEmpty(title))
-                    return BadRequest("Title is required");
-
-                var results = await _mangaDexService.SearchMangaAsync(title);
-                if (!results.Any())
-                    return NotFound($"No manga found with title '{title}'");
-
-                var importedComics = new List<Comic>();
-
-                foreach (var manga in results.Take(3))
-                {
-                    // Check if already exists
-                    if (_context.Comics.Any(c => c.MangaDexId == manga.MangaDexId))
-                        continue;
-
-                    // ✅ NEW: Get the actual cover filename for each manga
-                    var coverFilename = await _mangaDexService.GetCoverFilenameAsync(manga.MangaDexId);
-                    if (!string.IsNullOrEmpty(coverFilename))
-                    {
-                        manga.CoverImageUrl = $"https://uploads.mangadex.org/covers/{manga.MangaDexId}/{coverFilename}";
-                        Console.WriteLine($"✅ Cover URL set for {manga.Title}: {manga.CoverImageUrl}");
-                    }
-
-                    _context.Comics.Add(manga);
-                    importedComics.Add(manga);
-                }
-
-                if (importedComics.Any())
-                {
-                    await _context.SaveChangesAsync();
-                    return Ok(new
-                    {
-                        message = $"✅ Imported {importedComics.Count} manga",
-                        comics = importedComics
-                    });
-                }
-                else
-                {
-                    return Conflict(new
-                    {
-                        message = "All searched manga already exist in database",
-                        searchedTitles = results.Select(r => r.Title)
-                    });
-                }
+                manga.CoverImageUrl = $"https://uploads.mangadex.org/covers/{manga.MangaDexId}/{coverFilename}";
+                Console.WriteLine($"✅ Cover URL set for {manga.Title}: {manga.CoverImageUrl}");
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new
-                {
-                    error = "Failed to import manga",
-                    details = ex.Message
-                });
-            }
+
+            // ✅ FIXED: Fetch chapters before saving
+            Console.WriteLine($"🔄 Fetching chapters for: {manga.Title}");
+            var chapters = await _mangaDexService.GetFirstAndLatestChaptersAsync(manga.MangaDexId);
+            manga.Chapters = chapters;
+            Console.WriteLine($"✅ Loaded {chapters.Count} chapters for {manga.Title}");
+
+            _context.Comics.Add(manga);
+            importedComics.Add(manga);
         }
 
-[HttpGet("all-comics")]
+        if (importedComics.Any())
+        {
+            await _context.SaveChangesAsync();
+            return Ok(new
+            {
+                message = $"✅ Imported {importedComics.Count} manga with chapters",
+                comics = importedComics.Select(c => new {
+                    title = c.Title,
+                    chaptersCount = c.Chapters?.Count ?? 0,
+                    coverUrl = c.CoverImageUrl
+                })
+            });
+        }
+        else
+        {
+            return Conflict(new
+            {
+                message = "All searched manga already exist in database",
+                searchedTitles = results.Select(r => r.Title)
+            });
+        }
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(500, new
+        {
+            error = "Failed to import manga",
+            details = ex.InnerException?.Message ?? ex.Message,
+        });
+    }
+}
+        [HttpGet("all-comics")]
         public IActionResult GetAllComics()
         {
             var comics = _context.Comics.ToList();
             return Ok(comics);
         }
-[HttpGet("manga/{mangaDexId}/chapters")]
+        [HttpGet("manga/{mangaDexId}/chapters/first-and-latest")]
+        public async Task<IActionResult> GetFirstAndLatestChapters(string mangaDexId)
+        {
+            try
+            {
+                Console.WriteLine($"🔍 Getting first and latest chapters for: {mangaDexId}");
+
+                var firstChapter = await _mangaDexService.GetFirstChapterAsync(mangaDexId);
+                var latestChapter = await _mangaDexService.GetLatestChapterAsync(mangaDexId);
+
+                var result = new List<Chapter>();
+
+                if (firstChapter != null)
+                {
+                    result.Add(firstChapter);
+                    Console.WriteLine($"✅ First chapter: {firstChapter.ChapterNumber}");
+                }
+
+                if (latestChapter != null && (firstChapter == null || firstChapter.ChapterId != latestChapter.ChapterId))
+                {
+                    result.Add(latestChapter);
+                    Console.WriteLine($"✅ Latest chapter: {latestChapter.ChapterNumber}");
+                }
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error getting first and latest chapters: {ex.Message}");
+                return BadRequest($"Error: {ex.Message}");
+            }
+        }
+
+
+        [HttpGet("manga/{mangaDexId}/chapters")]
         public async Task<ActionResult<List<Chapter>>> GetChapters(string mangaDexId, [FromQuery] int limit = 100)
         {
             try
@@ -235,7 +281,9 @@ public async Task<IActionResult> DebugSearch([FromQuery] string title)
             }
         }
 
-[HttpGet("chapters/{chapterId}/pages")]
+
+
+        [HttpGet("chapters/{chapterId}/pages")]
         public async Task<IActionResult> GetChapterPages(string chapterId)
         {
             try
@@ -251,7 +299,24 @@ public async Task<IActionResult> DebugSearch([FromQuery] string title)
                 return BadRequest($"Error getting chapter pages: {ex.Message}");
             }
         }
-        
+
+        // In MangaDexController.cs
+[HttpGet("manga/{mangaDexId}/chapters/list")]
+public async Task<IActionResult> GetChapterList(string mangaDexId, [FromQuery] int limit = 500)
+{
+    try
+    {
+        Console.WriteLine($"🔍 Getting chapter list for: {mangaDexId}");
+        var chapters = await _mangaDexService.GetChapterListAsync(mangaDexId, limit);
+        return Ok(chapters);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ Error getting chapter list: {ex.Message}");
+        return BadRequest($"Error: {ex.Message}");
+    }
+}
+
         [HttpDelete("delete/{id}")]
         public async Task<IActionResult> DeleteComicById(int id)
         {
@@ -282,50 +347,71 @@ public async Task<IActionResult> DebugSearch([FromQuery] string title)
                     details = ex.Message
                 });
             }
-            
+
         }
 
-// [HttpGet("trending")]
-// public async Task<IActionResult> GetTrendingManga([FromQuery] int limit = 20)
-// {
-//     try
-//     {
-//         var trendingManga = await _mangaDexService.GetTrendingMangaAsync(limit);
-//         return Ok(trendingManga);
-//     }
-//     catch (Exception ex)
-//     {
-//         return BadRequest($"Error getting trending manga: {ex.Message}");
-//     }
-// }
+[HttpGet("debug-comics-with-chapters")]
+public IActionResult DebugComicsWithChapters()
+{
+    var comics = _context.Comics
+        .Include(c => c.Chapters) // Make sure to include chapters
+        .ToList();
+    
+    var result = comics.Select(c => new {
+        id = c.Id,
+        title = c.Title,
+        mangaDexId = c.MangaDexId,
+        chaptersCount = c.Chapters.Count,
+        chapters = c.Chapters.Select(ch => new { 
+            chapterId = ch.ChapterId, 
+            number = ch.ChapterNumber 
+        })
+    });
+    
+    return Ok(result);
+}
 
-// [HttpGet("recently-updated")]
-// public async Task<IActionResult> GetRecentlyUpdatedManga([FromQuery] int limit = 20)
-// {
-//     try
-//     {
-//         var updatedManga = await _mangaDexService.GetRecentlyUpdatedMangaAsync(limit);
-//         return Ok(updatedManga);
-//     }
-//     catch (Exception ex)
-//     {
-//         return BadRequest($"Error getting recently updated manga: {ex.Message}");
-//     }
-// }
+        // [HttpGet("trending")]
+        // public async Task<IActionResult> GetTrendingManga([FromQuery] int limit = 20)
+        // {
+        //     try
+        //     {
+        //         var trendingManga = await _mangaDexService.GetTrendingMangaAsync(limit);
+        //         return Ok(trendingManga);
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         return BadRequest($"Error getting trending manga: {ex.Message}");
+        //     }
+        // }
 
-// [HttpGet("new")]
-// public async Task<IActionResult> GetNewManga([FromQuery] int limit = 20)
-// {
-//     try
-//     {
-//         var newManga = await _mangaDexService.GetNewMangaAsync(limit);
-//         return Ok(newManga);
-//     }
-//     catch (Exception ex)
-//     {
-//         return BadRequest($"Error getting new manga: {ex.Message}");
-//     }
-// }
+        // [HttpGet("recently-updated")]
+        // public async Task<IActionResult> GetRecentlyUpdatedManga([FromQuery] int limit = 20)
+        // {
+        //     try
+        //     {
+        //         var updatedManga = await _mangaDexService.GetRecentlyUpdatedMangaAsync(limit);
+        //         return Ok(updatedManga);
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         return BadRequest($"Error getting recently updated manga: {ex.Message}");
+        //     }
+        // }
+
+        // [HttpGet("new")]
+        // public async Task<IActionResult> GetNewManga([FromQuery] int limit = 20)
+        // {
+        //     try
+        //     {
+        //         var newManga = await _mangaDexService.GetNewMangaAsync(limit);
+        //         return Ok(newManga);
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         return BadRequest($"Error getting new manga: {ex.Message}");
+        //     }
+        // }
 
         // Helper function
         private bool IsMostlyEnglish(string text)
@@ -336,10 +422,10 @@ public async Task<IActionResult> DebugSearch([FromQuery] string title)
         }
 
 
-        
+
     }
 
-    
-    
-    
+
+
+
 }

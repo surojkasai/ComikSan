@@ -1,7 +1,5 @@
 import 'package:comiksan/providers/comic_providers.dart';
-import 'package:comiksan/section/Trendingsection.dart';
 import 'package:comiksan/section/followingsection.dart';
-import 'package:comiksan/section/readingsection.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -33,16 +31,9 @@ class _MobilescaffoldState extends State<Mobilescaffold> {
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(8.0),
-          child: Column(
-            children: [
-              Followingsection(),
-              // Trendingsection(), Readingsection()
-            ],
-          ),
+          child: Column(children: [Followingsection()]),
         ),
       ),
-
-      //bottomNavigationBar: Footersection(),
     );
   }
 }

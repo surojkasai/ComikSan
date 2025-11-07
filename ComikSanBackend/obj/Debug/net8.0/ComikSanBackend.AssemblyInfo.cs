@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ComikSanBackend")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7e9929556e0f2877d5941e593a7a7ade1f282086")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+93fe0877d5ecb2fdfb108b68cd7b3155b68eccb0")]
 [assembly: System.Reflection.AssemblyProductAttribute("ComikSanBackend")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ComikSanBackend")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

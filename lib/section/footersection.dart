@@ -2,16 +2,10 @@ import 'package:comiksan/pages/download_page.dart';
 import 'package:flutter/material.dart';
 
 class Footersection extends StatefulWidget {
-  //final VoidCallback onSettingsPressed;
-  const Footersection({
-    super.key,
-    //required this.onSettingsPressed
-  });
+  const Footersection({super.key});
 
   @override
   State<Footersection> createState() => _FootersectionState();
-
-  //void settings() {}
 }
 
 class _FootersectionState extends State<Footersection> {
@@ -28,40 +22,17 @@ class _FootersectionState extends State<Footersection> {
             },
             icon: Icon(Icons.home, color: Colors.white),
           ),
-          //IconButton(onPressed: () {}, icon: Icon(Icons.category_outlined)),
-          IconButton(
-            onPressed: () {},
-            icon: Image.asset(
-              'assets/images/categories.png',
-              height: 20,
-              width: 20,
-              color: Colors.white,
-            ),
-          ),
+
           IconButton(
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder:
-                      (context) => Downloadpage(
-                        onTap: () {
-                          // Navigator.push(
-                          //   context,
-                          //   MaterialPageRoute(builder: (context) => ComickDetails()),
-                          // );
-                        },
-                      ),
-                ),
+                MaterialPageRoute(builder: (context) => Downloadpage(onTap: () {})),
               );
             },
             icon: Icon(Icons.download),
             color: Colors.white,
           ),
-          // IconButton(
-          //   onPressed: widget.onSettingsPressed,
-          //   icon: Icon(Icons.settings),
-          // ),
         ],
       ),
     );

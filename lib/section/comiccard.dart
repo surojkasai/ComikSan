@@ -1,7 +1,7 @@
 import 'package:comiksan/model/comic.dart';
+import 'package:comiksan/model/import.dart';
 import 'package:comiksan/pages/comick_details.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 class ComicCard extends StatelessWidget {
   final Comic comic;
@@ -21,25 +21,6 @@ class ComicCard extends StatelessWidget {
     this.onDownloadTap, // Optional callback for download
   });
 
-  // Get the latest chapter info
-  String get _latestChapterNumber {
-    if (comic.chapters.isNotEmpty) {
-      final latestChapter = comic.chapters.last;
-      return 'Ch. ${latestChapter.chapterNumber}';
-    }
-    return chapterno ?? 'No chapters';
-  }
-
-  String get _latestChapterTime {
-    if (comic.chapters.isNotEmpty) {
-      final latestChapter = comic.chapters.last;
-      if (latestChapter.publishedAt != null) {
-        return _formatTimeAgo(latestChapter.publishedAt!);
-      }
-    }
-    return publishedAt ?? '';
-  }
-
   String get _latestTranslator {
     if (comic.chapters.isNotEmpty) {
       final latestChapter = comic.chapters.last;
@@ -48,24 +29,28 @@ class ComicCard extends StatelessWidget {
     return translator ?? '';
   }
 
+  String get _lastSyncedTime {
+    return _formatTimeAgo(comic.lastSynced);
+  }
+
   String _formatTimeAgo(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date);
 
     if (difference.inDays > 365) {
       final years = (difference.inDays / 365).floor();
-      return '$years ${years == 1 ? 'year' : 'years'} ago';
+      return 'Synced $years ${years == 1 ? 'year' : 'years'} ago';
     } else if (difference.inDays > 30) {
       final months = (difference.inDays / 30).floor();
-      return '$months ${months == 1 ? 'month' : 'months'} ago';
+      return 'Synced $months ${months == 1 ? 'month' : 'months'} ago';
     } else if (difference.inDays > 0) {
-      return '${difference.inDays} ${difference.inDays == 1 ? 'day' : 'days'} ago';
+      return 'Synced ${difference.inDays} ${difference.inDays == 1 ? 'day' : 'days'} ago';
     } else if (difference.inHours > 0) {
-      return '${difference.inHours} ${difference.inHours == 1 ? 'hour' : 'hours'} ago';
+      return 'Synced ${difference.inHours} ${difference.inHours == 1 ? 'hour' : 'hours'} ago';
     } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes} ${difference.inMinutes == 1 ? 'minute' : 'minutes'} ago';
+      return 'Synced ${difference.inMinutes} ${difference.inMinutes == 1 ? 'minute' : 'minutes'} ago';
     } else {
-      return 'Just now';
+      return 'Just synced';
     }
   }
 
@@ -161,7 +146,7 @@ class ComicCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _latestChapterNumber,
+                  _lastSyncedTime,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 12,
@@ -170,31 +155,22 @@ class ComicCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                // Upload Time
-                if (_latestChapterTime.isNotEmpty)
-                  Text(
-                    _latestChapterTime,
-                    style: const TextStyle(color: Colors.grey, fontSize: 10),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
 
                 // Translator Group
-                if (_latestTranslator.isNotEmpty)
-                  Text(
-                    _latestTranslator,
-                    style: const TextStyle(color: Colors.white70, fontSize: 9),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                _latestTranslator.isNotEmpty
+                    ? Text(
+                      _latestTranslator,
+                      style: const TextStyle(color: Colors.white70, fontSize: 9),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    )
+                    : Text(
+                      "No translator",
+                      style: const TextStyle(color: Colors.white70, fontSize: 9),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
 
-                //comic title
-                Text(
-                  comic.title,
-                  style: const TextStyle(color: Colors.grey, fontSize: 10),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
                 Text(
                   comic.author,
                   style: const TextStyle(color: Colors.white, fontSize: 11),

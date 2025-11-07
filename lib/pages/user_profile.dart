@@ -36,16 +36,7 @@ class _UserProfileState extends State<UserProfile> {
           child: Column(
             children: [
               IconButton(onPressed: () {}, icon: Icon(Icons.person_2_outlined, size: 100)),
-              // TextFormField(
-              //   controller: emailController,
-              //   keyboardType: TextInputType.emailAddress,
-              //   style: TextStyle(color: Colors.white),
-              //   decoration: InputDecoration(
-              //     labelText: 'Email',
-              //     prefixIcon: Icon(Icons.email),
-              //     border: OutlineInputBorder(),
-              //   ),
-              // ),
+
               Text('logged in as ' + user.email!, style: TextStyle(color: Colors.white)),
               SizedBox(height: 10),
               //Text('Password chan '),

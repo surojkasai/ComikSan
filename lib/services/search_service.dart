@@ -1,15 +1,16 @@
 import 'dart:convert';
 import 'package:comiksan/config/environment.dart';
-import 'package:http/http.dart' as http;
 import 'package:comiksan/model/comic.dart';
+import 'package:http/http.dart' as http;
+import 'package:comiksan/model/import.dart';
 
 class SearchService {
-  static const String baseUrl = 'http://10.20.86.114:5055'; // Your backend URL
+  static const String baseUrl = Environment.baseUrl; // Your backend URL
 
   static Future<List<Comic>> searchManga(String query) async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/api/MangaDex/search?title=$query'),
+        Uri.parse('$baseUrl/MangaDex/search?title=$query'),
         headers: {'Content-Type': 'application/json'},
       );
 

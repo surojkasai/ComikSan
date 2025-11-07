@@ -1,13 +1,19 @@
 //code for when we browse individual comicks
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:comiksan/model/bookmark_model.dart';
+import 'package:comiksan/model/chapter.dart';
 import 'package:comiksan/model/comic.dart';
+import 'package:comiksan/model/import.dart';
+import 'package:comiksan/model/import.dart' as comic_model;
+import 'package:comiksan/pages/ComicReader.dart';
 import 'package:comiksan/providers/comic_providers.dart';
 import 'package:comiksan/section/ChapterlistSection.dart';
 import 'package:comiksan/services/api_service.dart';
 import 'package:comiksan/util/headfooter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
 
 class ComickDetails extends StatefulWidget {
@@ -115,11 +121,7 @@ class _ComickDetailsState extends State<ComickDetails> {
     print('=== FLUTTER: ComickDetails loading chapters ===');
     print('Comic title: ${widget.comic.title}');
     print('MangaDex ID: ${widget.comic.mangaDexId}');
-    // print('Existing chapters in comic: ${widget.comic.chapters.length}');
-    // final testMangaDexId = 'a1c7c817-4e59-43b7-9365-09675a149a6f'; // One Piece
 
-    // print('🔄 TEST: Using MangaDex ID: $testMangaDexId');
-    // Store in local variable for null safety
     final mangaDexId = widget.comic.mangaDexId;
     // If comic already has chapters, use them
     if (widget.comic.chapters.isNotEmpty) {
@@ -246,45 +248,133 @@ class _ComickDetailsState extends State<ComickDetails> {
                                 const SizedBox(height: 10),
                                 Flexible(
                                   child: TextButton(
-                                    onPressed: () {
-                                      // Navigator.push(
-                                      //   context,
-                                      //   MaterialPageRoute(
-                                      //     builder: (context) => ComicReader(chapter: chapter),
-                                      //   ),
-                                      // );
+                                    onPressed: () async {
+                                      final currentComic = widget.comic;
+                                      if (currentComic == null) return;
+
+                                      final box = Hive.box<BookmarkModel>('bookmarks');
+                                      final saved = box.get(currentComic.id.toString());
+
+                                      final api = ApiService();
+
+                                      // show small loading dialog while we fetch chapter(s)
+                                      showDialog(
+                                        context: context,
+                                        barrierDismissible: false,
+                                        builder:
+                                            (_) => Dialog(
+                                              backgroundColor: Colors.transparent,
+                                              child: Container(
+                                                padding: const EdgeInsets.all(20),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.grey[900],
+                                                  borderRadius: BorderRadius.circular(12),
+                                                ),
+                                                child: const Column(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    CircularProgressIndicator(),
+                                                    SizedBox(height: 12),
+                                                    Text(
+                                                      'Loading...',
+                                                      style: TextStyle(color: Colors.white),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                      );
+
+                                      try {
+                                        if (saved != null) {
+                                          // Bookmark exists
+                                          final chapterId = saved.chapterId;
+                                          final startPage = saved.pageNumber;
+
+                                          final chapterWithPages = await api.getChapterPages(
+                                            chapterId,
+                                          );
+                                          Navigator.of(context).pop();
+                                          if (!mounted) return;
+
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder:
+                                                  (_) => ComicReader(
+                                                    comic: currentComic,
+                                                    chapter: chapterWithPages,
+                                                    fetchChapter: (id) => api.getChapterPages(id),
+                                                    fetchChapterList:
+                                                        () => api.getChapters(
+                                                          currentComic.mangaDexId ?? '',
+                                                        ),
+                                                    startPage:
+                                                        startPage, // pass the bookmarked page
+                                                  ),
+                                            ),
+                                          );
+                                        } else {
+                                          // No bookmark, start from first chapter
+                                          final chapters = await api.getChapters(
+                                            currentComic.mangaDexId ?? '',
+                                          );
+                                          if (chapters.isEmpty) {
+                                            Navigator.of(context).pop();
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(
+                                                content: Text('No chapters available'),
+                                              ),
+                                            );
+                                            return;
+                                          }
+
+                                          final first = chapters.first;
+                                          final chapterWithPages = await api.getChapterPages(
+                                            first.chapterId,
+                                          );
+                                          Navigator.of(context).pop(); // close loading dialog
+                                          if (!mounted) return;
+
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder:
+                                                  (_) => ComicReader(
+                                                    comic: currentComic,
+                                                    chapter: chapterWithPages,
+                                                    fetchChapter: (id) => api.getChapterPages(id),
+                                                    fetchChapterList:
+                                                        () => api.getChapters(
+                                                          currentComic.mangaDexId ?? '',
+                                                        ),
+                                                    startPage: 0,
+                                                  ),
+                                            ),
+                                          );
+                                        }
+                                      } catch (e) {
+                                        Navigator.of(context).pop();
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text('Failed to open reader: $e')),
+                                        );
+                                      }
                                     },
                                     style: TextButton.styleFrom(
                                       backgroundColor: Colors.blue,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(12),
                                       ),
-                                      minimumSize: Size(100, 50),
+                                      minimumSize: const Size(100, 50),
                                     ),
-                                    child: Text(
+                                    child: const Text(
                                       'Continue',
                                       style: TextStyle(fontSize: 15, color: Colors.white),
                                     ),
                                   ),
                                 ),
                                 const SizedBox(height: 10),
-                                // Flexible(
-                                //   child: TextButton(
-                                //     onPressed: () {},
-                                //     style: TextButton.styleFrom(
-                                //       backgroundColor: Colors.blue,
-                                //       shape: RoundedRectangleBorder(
-                                //         borderRadius: BorderRadius.circular(12),
-                                //       ),
-                                //       minimumSize: Size(100, 50),
-                                //     ),
 
-                                //     child: Text(
-                                //       'Reading',
-                                //       style: TextStyle(fontSize: 15, color: Colors.white),
-                                //     ),
-                                //   ),
-                                // ),
                                 Flexible(
                                   child: TextButton(
                                     onPressed:
@@ -427,7 +517,11 @@ class _ComickDetailsState extends State<ComickDetails> {
         ),
       );
     }
-    return ChaptersSection(chapters: _chapters, mangaDexId: widget.comic.mangaDexId!);
+    return ChaptersSection(
+      comic: widget.comic,
+      chapters: _chapters,
+      mangaDexId: widget.comic.mangaDexId!,
+    );
   }
 }
 

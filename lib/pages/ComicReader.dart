@@ -1,276 +1,26 @@
-// import 'package:comiksan/model/comic.dart' as comic_model;
-// import 'package:comiksan/util/headfooter.dart';
-// import 'package:flutter/material.dart';
-// import 'package:comiksan/model/comic.dart';
-
-// class ComicReader extends StatefulWidget {
-//   final Chapter chapter;
-
-//   const ComicReader({super.key, required this.chapter});
-
-//   @override
-//   State<ComicReader> createState() => _ComicReaderState();
-// }
-
-// class _ComicReaderState extends State<ComicReader> {
-//   final ScrollController _scrollController = ScrollController();
-//   bool _isLoading = false;
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     print('=== FLUTTER: ComicReader initialized ===');
-//     print('Chapter: ${widget.chapter.title}');
-//     print('Chapter ID: ${widget.chapter.chapterId}');
-//     print('Total pages: ${widget.chapter.pages.length}');
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Headfooter(
-//       body: Scaffold(
-//         backgroundColor: Colors.black,
-//         appBar: AppBar(
-//           backgroundColor: Colors.black,
-//           title: Text('${widget.chapter.title}', style: TextStyle(color: Colors.white)),
-//           leading: IconButton(
-//             icon: Icon(Icons.arrow_back, color: Colors.white),
-//             onPressed: () => Navigator.pop(context),
-//           ),
-//         ),
-//         body: _buildReaderBody(),
-//       ),
-//     );
-//   }
-
-//   Widget _buildReaderBody() {
-//     if (widget.chapter.pages.isEmpty) {
-//       return Center(
-//         child: Column(
-//           mainAxisAlignment: MainAxisAlignment.center,
-//           children: [
-//             Icon(Icons.error_outline, color: Colors.white, size: 64),
-//             SizedBox(height: 16),
-//             Text('No pages available', style: TextStyle(color: Colors.white, fontSize: 18)),
-//           ],
-//         ),
-//       );
-//     }
-
-//     return Column(
-//       children: [
-//         // Progress indicator
-//         if (_isLoading)
-//           LinearProgressIndicator(
-//             backgroundColor: Colors.grey[800],
-//             valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
-//           ),
-
-//         // Vertical scrollable pages
-//         Expanded(
-//           child: NotificationListener<ScrollNotification>(
-//             onNotification: (scrollNotification) {
-//               // You can add lazy loading or other scroll-based features here
-//               return false;
-//             },
-//             child: Scrollbar(
-//               controller: _scrollController,
-//               child: ListView.builder(
-//                 controller: _scrollController,
-//                 physics: AlwaysScrollableScrollPhysics(),
-//                 itemCount: widget.chapter.pages.length,
-//                 itemBuilder: (context, index) {
-//                   final page = widget.chapter.pages[index];
-//                   return _buildPageItem(page, index);
-//                 },
-//               ),
-//             ),
-//           ),
-//         ),
-//       ],
-//     );
-//   }
-
-//   Widget _buildPageItem(comic_model.Page page, int index) {
-//     return Container(
-//       margin: EdgeInsets.only(bottom: 8),
-//       child: Column(
-//         children: [
-//           // Page image
-//           GestureDetector(
-//             onTap: () {
-//               // Optional: Add tap to zoom functionality
-//               _showFullScreenImage(page, index);
-//             },
-//             child: Container(
-//               color: Colors.black,
-//               child: Image.network(
-//                 page.imageUrl,
-//                 width: double.infinity,
-//                 fit: BoxFit.contain,
-//                 loadingBuilder: (context, child, loadingProgress) {
-//                   if (loadingProgress == null) {
-//                     print('✅ Page ${page.pageNumber} loaded successfully');
-//                     return child;
-//                   }
-
-//                   // Show loading indicator
-//                   return Container(
-//                     height: 400, // Minimum height while loading
-//                     color: Colors.grey[900],
-//                     child: Center(
-//                       child: Column(
-//                         mainAxisAlignment: MainAxisAlignment.center,
-//                         children: [
-//                           CircularProgressIndicator(
-//                             value:
-//                                 loadingProgress.expectedTotalBytes != null
-//                                     ? loadingProgress.cumulativeBytesLoaded /
-//                                         loadingProgress.expectedTotalBytes!
-//                                     : null,
-//                           ),
-//                           SizedBox(height: 8),
-//                           Text(
-//                             'Loading page ${page.pageNumber}...',
-//                             style: TextStyle(color: Colors.white70),
-//                           ),
-//                         ],
-//                       ),
-//                     ),
-//                   );
-//                 },
-//                 errorBuilder: (context, error, stackTrace) {
-//                   print('❌ Error loading page ${page.pageNumber}: $error');
-//                   print('URL: ${page.imageUrl}');
-
-//                   return Container(
-//                     height: 400,
-//                     color: Colors.grey[900],
-//                     child: Column(
-//                       mainAxisAlignment: MainAxisAlignment.center,
-//                       children: [
-//                         Icon(Icons.error, color: Colors.white, size: 50),
-//                         SizedBox(height: 10),
-//                         Text(
-//                           'Failed to load page ${page.pageNumber}',
-//                           style: TextStyle(color: Colors.white),
-//                         ),
-//                         SizedBox(height: 10),
-//                         ElevatedButton(
-//                           onPressed: () {
-//                             setState(() {
-//                               // Trigger rebuild to retry loading
-//                             });
-//                           },
-//                           child: Text('Retry'),
-//                         ),
-//                       ],
-//                     ),
-//                   );
-//                 },
-//               ),
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-//   void _showFullScreenImage(comic_model.Page page, int index) {
-//     showDialog(
-//       context: context,
-//       builder:
-//           (context) => Dialog(
-//             backgroundColor: Colors.black,
-//             insetPadding: EdgeInsets.zero,
-//             child: GestureDetector(
-//               onTap: () => Navigator.pop(context),
-//               child: Container(
-//                 width: double.infinity,
-//                 height: double.infinity,
-//                 color: Colors.black,
-//                 child: InteractiveViewer(
-//                   panEnabled: true,
-//                   scaleEnabled: true,
-//                   minScale: 0.5,
-//                   maxScale: 3.0,
-//                   child: Center(child: Image.network(page.imageUrl, fit: BoxFit.contain)),
-//                 ),
-//               ),
-//             ),
-//           ),
-//     );
-//   }
-
-//   // Optional: Add jump to page functionality
-//   void _showJumpToPageDialog() {
-//     showDialog(
-//       context: context,
-//       builder:
-//           (context) => AlertDialog(
-//             backgroundColor: Colors.grey[900],
-//             title: Text('Jump to Page', style: TextStyle(color: Colors.white)),
-//             content: TextField(
-//               keyboardType: TextInputType.number,
-//               style: TextStyle(color: Colors.white),
-//               decoration: InputDecoration(
-//                 hintText: 'Enter page number (1-${widget.chapter.pages.length})',
-//                 hintStyle: TextStyle(color: Colors.white54),
-//                 border: OutlineInputBorder(),
-//               ),
-//               onSubmitted: (value) {
-//                 final pageNumber = int.tryParse(value);
-//                 if (pageNumber != null &&
-//                     pageNumber >= 1 &&
-//                     pageNumber <= widget.chapter.pages.length) {
-//                   _jumpToPage(pageNumber - 1);
-//                   Navigator.pop(context);
-//                 }
-//               },
-//             ),
-//             actions: [
-//               TextButton(
-//                 onPressed: () => Navigator.pop(context),
-//                 child: Text('Cancel', style: TextStyle(color: Colors.white70)),
-//               ),
-//             ],
-//           ),
-//     );
-//   }
-
-//   void _jumpToPage(int index) {
-//     if (_scrollController.hasClients) {
-//       final itemHeight = MediaQuery.of(context).size.height * 0.8; // Estimate height
-//       final position = index * itemHeight;
-//       _scrollController.animateTo(
-//         position,
-//         duration: Duration(milliseconds: 500),
-//         curve: Curves.easeInOut,
-//       );
-//     }
-//   }
-
-//   @override
-//   void dispose() {
-//     _scrollController.dispose();
-//     super.dispose();
-//   }
-// }
-
-import 'package:flutter/material.dart';
+import 'package:comiksan/model/bookmark_model.dart';
+import 'package:comiksan/model/chapter.dart' as comic_model;
 import 'package:comiksan/model/comic.dart' as comic_model;
+import 'package:comiksan/model/page.dart' as comic_model;
+import 'package:comiksan/services/download_Service.dart';
+import 'package:flutter/material.dart';
 import 'package:comiksan/services/chapter_service.dart';
+import 'package:hive/hive.dart';
 
 class ComicReader extends StatefulWidget {
+  final comic_model.Comic comic;
   final comic_model.Chapter chapter;
   final Future<comic_model.Chapter> Function(String) fetchChapter;
   final Future<List<comic_model.Chapter>> Function() fetchChapterList;
+  final int startPage;
 
   const ComicReader({
     super.key,
+    required this.comic,
     required this.chapter,
     required this.fetchChapter,
     required this.fetchChapterList,
+    this.startPage = 0,
   });
 
   @override
@@ -289,7 +39,24 @@ class _ComicReaderState extends State<ComicReader> {
   @override
   void initState() {
     super.initState();
+    _currentPageIndex = widget.startPage;
+    _checkBookmark();
     _initializeChapter();
+  }
+
+  bool isBookmarked = false;
+
+  Future<void> _checkBookmark() async {
+    final currentComic = widget.comic;
+
+    final box = Hive.box<BookmarkModel>('bookmarks');
+    final saved = box.get(currentComic.id.toString());
+
+    if (saved != null && saved.pageNumber == _currentPageIndex) {
+      setState(() => isBookmarked = true);
+    } else {
+      setState(() => isBookmarked = false);
+    }
   }
 
   Future<void> _initializeChapter() async {
@@ -332,6 +99,7 @@ class _ComicReaderState extends State<ComicReader> {
         _currentPageIndex++;
       });
       _scrollToPage(_currentPageIndex);
+      _checkBookmark();
     } else {
       // If on last page, go to next chapter
       _goToNextChapter();
@@ -346,6 +114,8 @@ class _ComicReaderState extends State<ComicReader> {
         _currentPageIndex--;
       });
       _scrollToPage(_currentPageIndex);
+      // _autoSaveBookmark();
+      _checkBookmark();
     } else {
       // If on first page, go to previous chapter
       _goToPreviousChapter();
@@ -389,6 +159,8 @@ class _ComicReaderState extends State<ComicReader> {
       });
 
       _scrollToTop();
+      // _autoSaveBookmark();
+      _checkBookmark();
       _showSnackBar('${isNext ? 'Next' : 'Previous'} chapter: ${currentChapter?.title}');
     } catch (e) {
       setState(() {
@@ -545,81 +317,15 @@ class _ComicReaderState extends State<ComicReader> {
         if (_isLoadingChapter) return;
 
         if (details.primaryVelocity! > 0) {
-          // Swipe right - go to previous chapter
           _goToPreviousChapter();
         } else if (details.primaryVelocity! < 0) {
-          // Swipe left - go to next chapter
           _goToNextChapter();
         }
       },
-      child: Column(
+      child: Stack(
         children: [
-          // Chapter navigation info
-          if (_chapterService.previousChapter != null || _chapterService.nextChapter != null)
-            Container(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              color: Colors.grey[800],
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Previous chapter info
-                  Expanded(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Icon(Icons.arrow_back, color: Colors.white54, size: 16),
-                        SizedBox(width: 4),
-                        Text(
-                          _chapterService.previousChapter != null
-                              ? 'Prev: ${_chapterService.previousChapter!.title}'
-                              : 'No previous chapter',
-                          style: TextStyle(color: Colors.white54, fontSize: 12),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Current chapter indicator
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.blue[800],
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      'Chapter',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-
-                  // Next chapter info
-                  Expanded(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Text(
-                          _chapterService.nextChapter != null
-                              ? 'Next: ${_chapterService.nextChapter!.title}'
-                              : 'No next chapter',
-                          style: TextStyle(color: Colors.white54, fontSize: 12),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        SizedBox(width: 4),
-                        Icon(Icons.arrow_forward, color: Colors.white54, size: 16),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-          // Vertical scrollable pages
-          Expanded(
+          // The scrollable pages
+          Positioned.fill(
             child: NotificationListener<ScrollNotification>(
               onNotification: (scrollNotification) {
                 if (scrollNotification is ScrollUpdateNotification ||
@@ -642,6 +348,102 @@ class _ComicReaderState extends State<ComicReader> {
               ),
             ),
           ),
+
+          // Bottom chapter navigation
+          if (_chapterService.previousChapter != null || _chapterService.nextChapter != null)
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                color: Colors.grey[800]?.withOpacity(0.9),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Previous chapter
+                    Expanded(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Icon(Icons.arrow_back, color: Colors.white54, size: 16),
+                          SizedBox(width: 4),
+                          Flexible(
+                            child: Tooltip(
+                              message:
+                                  _chapterService.previousChapter?.title ?? 'No previous chapter',
+                              child: Text(
+                                'Prev: ${_chapterService.previousChapter?.title ?? ''}',
+                                style: const TextStyle(color: Colors.white54, fontSize: 12),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Bookmark button
+                    SizedBox(
+                      width: 45,
+                      height: 45,
+                      child: FloatingActionButton(
+                        backgroundColor: Colors.white,
+                        onPressed: () async {
+                          final currentComic = widget.comic;
+                          final current = currentChapter;
+
+                          if (current != null && current.pages.isNotEmpty) {
+                            final box = Hive.box<BookmarkModel>('bookmarks');
+                            final bookmark = BookmarkModel(
+                              comicId: currentComic.id.toString(),
+                              chapterId: current.chapterId.toString(),
+                              pageNumber: _currentPageIndex,
+                            );
+                            await box.put(currentComic.id.toString(), bookmark);
+
+                            setState(() => isBookmarked = true);
+                            _showSnackBar('Bookmarked page ${bookmark.pageNumber}');
+                          } else {
+                            _showSnackBar('No page to bookmark');
+                          }
+                        },
+                        child: Icon(
+                          isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+
+                    // Next chapter
+                    Expanded(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Flexible(
+                            child: Tooltip(
+                              message:
+                                  _chapterService.nextChapter != null
+                                      ? 'Next: ${_chapterService.nextChapter!.title}'
+                                      : 'No next chapter',
+                              child: Text(
+                                _chapterService.nextChapter != null
+                                    ? 'Next: ${_chapterService.nextChapter!.title}'
+                                    : 'No next chapter',
+                                style: TextStyle(color: Colors.white54, fontSize: 12),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 4),
+                          Icon(Icons.arrow_forward, color: Colors.white54, size: 16),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -660,6 +462,7 @@ class _ComicReaderState extends State<ComicReader> {
       setState(() {
         _currentPageIndex = newPageIndex;
       });
+      // _autoSaveBookmark();
     }
   }
 
@@ -705,6 +508,7 @@ class _ComicReaderState extends State<ComicReader> {
               ),
             );
           },
+
           errorBuilder: (context, error, stackTrace) {
             return Container(
               height: 400,

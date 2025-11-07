@@ -1,4 +1,7 @@
+import 'package:comiksan/model/bookmark_model.dart';
+import 'package:comiksan/model/chapter.dart';
 import 'package:comiksan/model/comic.dart';
+import 'package:comiksan/model/page.dart';
 import 'package:comiksan/pages/Login.dart';
 import 'package:comiksan/pages/Signin.dart';
 import 'package:comiksan/pages/comick_details.dart';
@@ -6,21 +9,38 @@ import 'package:comiksan/pages/download_page.dart';
 import 'package:comiksan/pages/homepage.dart';
 import 'package:comiksan/pages/user_profile.dart';
 import 'package:comiksan/providers/comic_providers.dart';
+import 'package:comiksan/services/download_Service.dart';
 import 'package:comiksan/util/headfooter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/services.dart';
+import 'package:hive_flutter/adapters.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await Hive.initFlutter();
+  print('✅ Hive initialized');
+
+  // ✅ REGISTER ALL ADAPTERS
+  Hive.registerAdapter(ComicAdapter());
+  Hive.registerAdapter(ChapterAdapter());
+  Hive.registerAdapter(PageAdapter());
+  Hive.registerAdapter(BookmarkModelAdapter());
+  print('✅ All adapters registered');
+
+  await Hive.openBox<BookmarkModel>('bookmarks');
+  await Hive.openBox<Comic>('downloaded_comics');
+  await DownloadService().init();
+  // await Hive.openBox<Comic>('user_library');
+  print('✅ All boxes opened');
+
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   runApp(const MyApp());
-  //runApp(MyApp());
 }
 
 class MyApp extends StatefulWidget {

@@ -1,5 +1,6 @@
 // lib/services/chapter_service.dart
-import 'package:comiksan/model/comic.dart' as comic_model;
+import 'package:comiksan/model/chapter.dart' as comic_model;
+import 'package:comiksan/model/import.dart' as comic_model;
 
 class ChapterService {
   static final ChapterService _instance = ChapterService._internal();

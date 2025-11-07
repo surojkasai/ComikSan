@@ -5,21 +5,26 @@ import 'package:comiksan/section/comiccard.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class Followingsection extends StatelessWidget {
+class Followingsection extends StatefulWidget {
   const Followingsection({super.key});
 
   @override
+  State<Followingsection> createState() => _FollowingsectionState();
+}
+
+class _FollowingsectionState extends State<Followingsection> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Consumer<ComicProvider>(
       builder: (context, comicProvider, child) {
         print('🔴 ComicProvider consumer rebuilding');
 
         final comics = comicProvider.comics;
         print('🔴 Comics count: ${comics.length}');
-        // Handle loading state
-        // if (comicProvider.isLoading) {
-        //   return const Center(child: CircularProgressIndicator());
-        // }
 
         // Handle error state
         if (comicProvider.error.isNotEmpty) {
@@ -45,32 +50,31 @@ class Followingsection extends StatelessWidget {
             const Text("Following", style: TextStyle(fontSize: 18, color: Colors.amber)),
             const SizedBox(height: 8),
             SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children:
-                    comics.map((comic) {
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => ComickDetails(comic: comic)),
+              scrollDirection: Axis.vertical,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children:
+                        comics.map((comic) {
+                          return SizedBox(
+                            width: (MediaQuery.of(context).size.width - 40) / 3, // 3 items per row
+                            child: ComicCard(
+                              downloadIcon: Icons.download,
+                              comic: comic,
+                              onDownloadTap: () {
+                                Navigator.of(
+                                  context,
+                                  rootNavigator: true,
+                                ).push(MaterialPageRoute(builder: (_) => Downloadpage()));
+                              },
+                            ),
                           );
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.all(0),
-                          child: ComicCard(
-                            downloadIcon: Icons.download,
-                            comic: comic,
-                            onDownloadTap: () {
-                              Navigator.of(
-                                context,
-                                rootNavigator: true,
-                              ).push(MaterialPageRoute(builder: (_) => Downloadpage()));
-                            },
-                          ),
-                        ),
-                      );
-                    }).toList(),
+                        }).toList(),
+                  ),
+                ],
               ),
             ),
           ],

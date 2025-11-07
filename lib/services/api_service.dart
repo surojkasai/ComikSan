@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'package:comiksan/config/environment.dart';
+import 'package:comiksan/model/chapter.dart';
 import 'package:comiksan/model/comic.dart';
+import 'package:comiksan/model/import.dart';
 import 'package:http/http.dart' as http;
 
 class ApiService {
   // static const String baseUrl = 'http://10.0.2.2:5055/api'; // For Android emulator
-  static const String baseUrl = 'http://10.20.86.114:5055/api';
+  static const String baseUrl = Environment.baseUrl;
   final http.Client client = http.Client();
   // static const String baseUrl = 'http://192.168.101.17/api';
   // static const String baseUrl = 'http://localhost:5055/api'; // For iOS simulator
@@ -63,6 +65,32 @@ class ApiService {
     }
   }
 
+  // In api_service.dart - Add these methods
+  Future<List<Chapter>> getChapterList(String mangaDexId, {int limit = 500}) async {
+    try {
+      print('🔄 ApiService: Getting chapter list for: $mangaDexId');
+
+      final response = await client.get(
+        Uri.parse('$baseUrl/mangadex/manga/$mangaDexId/chapters/list?limit=$limit'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonList = json.decode(response.body);
+        final chapters = jsonList.map((json) => Chapter.fromJson(json)).toList();
+
+        print('✅ Chapter list loaded: ${chapters.length} chapters');
+        return chapters;
+      } else {
+        throw Exception('Failed to load chapter list: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('❌ Error loading chapter list: $e');
+      rethrow;
+    }
+  }
+
+  // Keep your existing method for loading pages
   Future<Chapter> getChapterPages(String chapterId) async {
     try {
       final response = await client.get(
@@ -108,55 +136,89 @@ class ApiService {
     }
   }
 
-  // Future<List<Comic>> getTrendingManga({int limit = 5}) async {
-  //   try {
-  //     final response = await http.get(Uri.parse('$baseUrl/api/MangaDex/trending?limit=$limit'));
+  // In api_service.dart - Replace the findChapterByNumber method
+  Future<Chapter?> findChapterByNumber(String mangaDexId, String chapterNumber) async {
+    try {
+      print('🔄 ApiService: Searching for chapter $chapterNumber in manga $mangaDexId');
 
-  //     if (response.statusCode == 200) {
-  //       final List<dynamic> data = json.decode(response.body);
-  //       return data.map((item) => Comic.fromJson(item)).toList();
-  //     } else {
-  //       throw Exception('Failed to load trending manga: ${response.statusCode}');
-  //     }
-  //   } catch (e) {
-  //     print('Error getting trending manga: $e');
-  //     rethrow;
-  //   }
-  // }
+      final response = await client.get(
+        Uri.parse(
+          '$baseUrl/mangadex/manga/$mangaDexId/chapters?limit=200',
+        ), // Get more chapters to search through
+        headers: {'Content-Type': 'application/json'},
+      );
 
-  // Future<List<Comic>> getRecentlyUpdatedManga({int limit = 5}) async {
-  //   try {
-  //     final response = await http.get(
-  //       Uri.parse('$baseUrl/api/MangaDex/recently-updated?limit=$limit'),
-  //     );
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonList = json.decode(response.body);
+        final chapters = jsonList.map((json) => Chapter.fromJson(json)).toList();
 
-  //     if (response.statusCode == 200) {
-  //       final List<dynamic> data = json.decode(response.body);
-  //       return data.map((item) => Comic.fromJson(item)).toList();
-  //     } else {
-  //       throw Exception('Failed to load recently updated manga: ${response.statusCode}');
-  //     }
-  //   } catch (e) {
-  //     print('Error getting recently updated manga: $e');
-  //     rethrow;
-  //   }
-  // }
+        print('✅ Found ${chapters.length} chapters, searching for chapter $chapterNumber');
 
-  // Future<List<Comic>> getNewManga({int limit = 5}) async {
-  //   try {
-  //     final response = await http.get(Uri.parse('$baseUrl/api/MangaDex/new?limit=$limit'));
+        // Search for the chapter by number
+        for (var chapter in chapters) {
+          // Try exact match first
+          if (chapter.chapterNumber == chapterNumber) {
+            print('✅ Found exact match: Chapter ${chapter.chapterNumber}');
+            return chapter;
+          }
 
-  //     if (response.statusCode == 200) {
-  //       final List<dynamic> data = json.decode(response.body);
-  //       return data.map((item) => Comic.fromJson(item)).toList();
-  //     } else {
-  //       throw Exception('Failed to load new manga: ${response.statusCode}');
-  //     }
-  //   } catch (e) {
-  //     print('Error getting new manga: $e');
-  //     rethrow;
-  //   }
-  // }
+          // Try numeric comparison (handles decimal formatting differences)
+          final inputNum = double.tryParse(chapterNumber);
+          final chapterNum = double.tryParse(chapter.chapterNumber);
+          if (inputNum != null && chapterNum != null && inputNum == chapterNum) {
+            print('✅ Found numeric match: Chapter ${chapter.chapterNumber}');
+            return chapter;
+          }
+        }
+
+        // If no exact match, try fuzzy search
+        for (var chapter in chapters) {
+          if (chapter.chapterNumber.contains(chapterNumber) ||
+              chapterNumber.contains(chapter.chapterNumber)) {
+            print('✅ Found fuzzy match: Chapter ${chapter.chapterNumber}');
+            return chapter;
+          }
+        }
+
+        print('❌ No chapter found with number: $chapterNumber');
+        return null;
+      } else {
+        print('❌ Failed to load chapters: ${response.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      print('❌ Error searching chapter: $e');
+      return null;
+    }
+  }
+
+  // Add this to your ApiService class
+  Future<List<Chapter>> getFirstAndLatestChapters(String mangaDexId) async {
+    try {
+      print('🔄 ApiService: Getting first and latest chapters for: $mangaDexId');
+
+      final response = await client.get(
+        Uri.parse('$baseUrl/mangadex/manga/$mangaDexId/chapters/first-and-latest'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonList = json.decode(response.body);
+        final chapters = jsonList.map((json) => Chapter.fromJson(json)).toList();
+
+        print('✅ First and latest chapters loaded: ${chapters.length}');
+        for (var chapter in chapters) {
+          print('   - Chapter ${chapter.chapterNumber}: ${chapter.title}');
+        }
+        return chapters;
+      } else {
+        throw Exception('Failed to load first and latest chapters: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('❌ Error loading first and latest chapters: $e');
+      rethrow;
+    }
+  }
 
   void dispose() {
     client.close();

@@ -156,7 +156,7 @@ class _LoginState extends State<Login> {
                             }
                           },
                           icon: Image.asset(
-                            'assets/images/googlemulti.png',
+                            'assets/images/googlemulti.jpg',
                             width: 50,
                             height: 40,
                             colorBlendMode: BlendMode.src,

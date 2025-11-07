@@ -109,7 +109,7 @@ class _UserProfileState extends State<Signin> {
                         child: IconButton(
                           onPressed: () {},
                           icon: Image.asset(
-                            'assets/images/googlemulti.png',
+                            'assets/images/googlemulti.jpg',
                             width: 50,
                             height: 40,
                             colorBlendMode: BlendMode.src,

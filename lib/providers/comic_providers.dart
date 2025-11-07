@@ -1,3 +1,4 @@
+import 'package:comiksan/model/chapter.dart';
 import 'package:comiksan/model/comic.dart';
 import 'package:comiksan/services/search_service.dart';
 import 'package:flutter/foundation.dart';
