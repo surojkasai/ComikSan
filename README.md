@@ -1,3 +1,4 @@
+```markdown
 # ComikSan
 
 A full stack manga/comic app built using **Flutter** for frontend and **.NET Web API** for backend.
@@ -60,14 +61,19 @@ dotnet run
 ## Screenshots / Demo
  
 ### Home Page
+
 ![homepage](homepage.jpg)
+
+### Comics Page
 
 ![comic info](card.jpg)
 
 ### Downloads Page
+
 ![download page](downloads.jpg)
 
 ### Search Results
+
 ![search](search-1.jpg)
 
 

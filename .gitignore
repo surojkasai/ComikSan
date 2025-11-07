@@ -44,6 +44,7 @@ obj/
 appsettings.json
 appsettings.Development.json
 comick.db
+
 # Symbolication related
 app.*.symbols
 
