@@ -57,10 +57,18 @@ dotnet run
 
 
 ## Screenshots / Demo
+ 
+### Home Page
 ![homepage](homepage.jpg)
+
+### Comic Page
 ![comic info](card.jpg)
+
+### Downloads Page
 ![download page](downloads.jpg)
-![search result](search.jpg)
+
+### Search Results
+![search](search-1.jpg)
 
 
 ## Status
