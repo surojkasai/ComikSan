@@ -42,7 +42,8 @@ app.UseAuthorization();
 app.MapControllers();
 
 
-app.Urls.Add("http://10.182.149.171:5055");
+
+app.Urls.Add("http://10.182.149.33:5055");
 //to test a specific endpoint
 // app.MapGet("/", () => "ComikSan Backend API is running!");
 app.Run();

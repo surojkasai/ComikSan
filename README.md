@@ -57,8 +57,11 @@ dotnet run
 
 
 ## Screenshots / Demo
+![homepage](homepage.jpg)
+![comic info](card.jpg)
+![download page](downloads.jpg)
+![search result](search.jpg)
 
-*(optional — add images or video later)*
 
 ## Status
 
