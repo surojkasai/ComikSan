@@ -12,6 +12,7 @@ The app supports offline mode, authentication via Firebase, and manga data fetch
 - Frontend: Flutter  
 - Backend: .NET Web API  
 - Database: SQLite + EF Core  
+- Local caching: Hive DB  
 - Authentication: Firebase  
 - API source: Mangadex API
 
@@ -61,7 +62,6 @@ dotnet run
 ### Home Page
 ![homepage](homepage.jpg)
 
-### Comic Page
 ![comic info](card.jpg)
 
 ### Downloads Page
